@@ -1,10 +1,10 @@
 {
   "name": "sshmud",
   "scripts": {
-    "start": "npx ts-node index.ts"
+    "start": "npx ts-node --files index.ts"
   },
   "dependencies": {
-    "blessed": "^0.1.81",
+    "neo-blessed": "^0.2.0",
     "ssh2": "^1.5.0",
     "telnetlib": "^1.0.1"
   },

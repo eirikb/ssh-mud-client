@@ -1,12 +1,8 @@
-import * as blessed from "blessed";
+import * as blessed from "neo-blessed";
 import * as fs from "fs";
 import { Server } from "ssh2";
 import * as net from "net";
 import teleTui from "./tele-tui";
-import { Widgets } from "blessed";
-import Screen = Widgets.Screen;
-
-const sessions: { [sign: string]: Screen } = {};
 
 new Server(
   {
@@ -50,22 +46,13 @@ new Server(
           console.log("shell", username, key);
           const stream = accept();
 
-          const screen =
-            sessions[key] ||
-            blessed.screen({
-              smartCSR: true,
-              terminal: "xterm-256color",
-              fullUnicode: true,
-              input: stream,
-              output: stream,
-            });
-
-          if (key) sessions[key] = screen;
-
-          console.log(Object.keys(sessions));
-
-          screen.input = stream;
-          screen.output = stream;
+          const screen = blessed.screen({
+            smartCSR: true,
+            terminal: "xterm-256color",
+            fullUnicode: true,
+            input: stream,
+            output: stream,
+          });
 
           function resize() {
             // @ts-ignore

@@ -1,4 +1,4 @@
-import * as blessed from "blessed";
+import * as blessed from "neo-blessed";
 import teleTui from "./tele-tui";
 import * as net from "net";
 import * as fs from "fs";

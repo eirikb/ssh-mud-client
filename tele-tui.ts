@@ -1,5 +1,5 @@
-import * as blessed from "blessed";
-import { Widgets } from "blessed";
+import * as blessed from "neo-blessed";
+import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
 import { Socket } from "net";
 
