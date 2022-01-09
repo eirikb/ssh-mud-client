@@ -1,8 +1,10 @@
 import * as blessed from "neo-blessed";
 import * as fs from "fs";
 import { Server } from "ssh2";
-import * as net from "net";
+import * as telnetlib from "telnetlib";
 import teleTui from "./tele-tui";
+
+const { GMCP, MCCP } = telnetlib.options;
 
 new Server(
   {
@@ -14,17 +16,16 @@ new Server(
     client
       .on("authentication", (ctx) => {
         console.log(ctx.username, ctx.method);
-        if (ctx.method === "none") {
-          return ctx.reject();
-        }
-        if (ctx.method === "keyboard-interactive") {
-          return ctx.accept();
-        }
-        if (ctx.method === "password") return ctx.reject();
+
+        if (ctx.method === "none") return ctx.reject();
+        else if (ctx.method === "keyboard-interactive") ctx.accept();
+        else if (ctx.method === "password") return ctx.reject();
+
         username = ctx.username;
 
-        if (ctx.key) {
-          key = ctx.key.data.toString("hex");
+        const k = (ctx as any).key;
+        if (k) {
+          key = k.data.toString("hex");
         }
 
         console.log("auth", username, key);
@@ -80,13 +81,20 @@ new Server(
             screen.destroy();
           });
 
-          teleTui(
-            screen,
-            net.connect({
+          const c = telnetlib.createConnection(
+            {
               host: "aardwolf.org",
               port: 23,
-            })
+              remoteOptions: [GMCP, MCCP],
+              localOptions: [GMCP, MCCP],
+            },
+            () => {
+              // Hack
+              (c as any).reader.flushPolicy.endOfChunk = true;
+            }
           );
+
+          teleTui(screen, c);
         });
       });
   }

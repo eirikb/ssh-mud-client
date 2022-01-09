@@ -1,4 +1,5 @@
 {
+  "version": "0.1",
   "name": "sshmud",
   "scripts": {
     "start": "npx ts-node --files index.ts"

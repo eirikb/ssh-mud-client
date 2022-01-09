@@ -2,6 +2,9 @@ import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
 import { Socket } from "net";
+import { readFileSync } from "fs";
+
+const { version } = JSON.parse(readFileSync("./package.json", "utf-8"));
 
 export default (screen: Screen, client: Socket) => {
   const main = blessed.log({
@@ -45,6 +48,7 @@ export default (screen: Screen, client: Socket) => {
     },
   });
 
+  // @ts-ignore
   const map = blessed.log({
     parent: screen,
     label: "Map",
@@ -77,6 +81,9 @@ export default (screen: Screen, client: Socket) => {
     border: "line",
     children: [prePrompt, prompt],
   });
+
+  main.pushLine(`Welcome to ssh-mud-client version ${version}`);
+  main.pushLine("Connecting to aardwolf...");
 
   screen.render();
 
@@ -117,36 +124,36 @@ export default (screen: Screen, client: Socket) => {
 
       let lines = printable.split("\n");
 
-      let bloodyMap: number;
-      do {
-        bloodyMap = lines.findIndex((line) => line.match(/\x1b\[1;35m#\x1b/));
-        if (bloodyMap >= 0) {
-          const eh = lines[bloodyMap]?.slice(0, 3);
-          if (eh) {
-            const start =
-              bloodyMap -
-              lines
-                .slice(0, bloodyMap)
-                .reverse()
-                .findIndex(
-                  (line) => line.trim() === "" || !line.startsWith(eh)
-                );
-            const end =
-              bloodyMap +
-              lines.slice(bloodyMap).findIndex((line) => !line.startsWith(eh)) +
-              1;
-
-            if (start >= 0 && end > start) {
-              map.setContent(lines.slice(start, end).join("\n"));
-              lines = lines.slice(0, start).concat(lines.slice(end));
-            } else {
-              bloodyMap = -1;
-            }
-          } else {
-            bloodyMap = -1;
-          }
-        }
-      } while (bloodyMap >= 0);
+      // let bloodyMap: number;
+      // do {
+      //   bloodyMap = lines.findIndex((line) => line.match(/\x1b\[1;35m#\x1b/));
+      //   if (bloodyMap >= 0) {
+      //     const eh = lines[bloodyMap]?.slice(0, 3);
+      //     if (eh) {
+      //       const start =
+      //         bloodyMap -
+      //         lines
+      //           .slice(0, bloodyMap)
+      //           .reverse()
+      //           .findIndex(
+      //             (line) => line.trim() === "" || !line.startsWith(eh)
+      //           );
+      //       const end =
+      //         bloodyMap +
+      //         lines.slice(bloodyMap).findIndex((line) => !line.startsWith(eh)) +
+      //         1;
+      //
+      //       if (start >= 0 && end > start) {
+      //         map.setContent(lines.slice(start, end).join("\n"));
+      //         lines = lines.slice(0, start).concat(lines.slice(end));
+      //       } else {
+      //         bloodyMap = -1;
+      //       }
+      //     } else {
+      //       bloodyMap = -1;
+      //     }
+      //   }
+      // } while (bloodyMap >= 0);
 
       main.pushLine(lines.join("\n"));
     })
