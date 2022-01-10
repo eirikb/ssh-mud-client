@@ -1,12 +1,11 @@
 import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
-import { Socket } from "net";
 import { readFileSync } from "fs";
 
 const { version } = JSON.parse(readFileSync("./package.json", "utf-8"));
 
-export default (screen: Screen, client: Socket) => {
+export default (screen: Screen, client: Client) => {
   const main = blessed.log({
     parent: screen,
     width: "75%",
@@ -88,23 +87,12 @@ export default (screen: Screen, client: Socket) => {
   screen.render();
 
   client
-    .on("connect", () => {
+    .onConnect(() => {
       main.pushLine("Connected!");
     })
-    .on("data", (data: Buffer) => {
-      const ascii = data.toString("ascii");
-      const escape = /\x7f../g;
-      const escapes = ascii.match(escape) || [];
-      (escapes || []).forEach((esc) => {
-        debug.pushLine(
-          `Escape code: ${esc
-            .split("")
-            .map((c) => c.charCodeAt(0))
-            .join(" ")}`
-        );
-      });
-
-      if (escapes.some((e) => e === "\x7f\x7b\x01")) {
+    .onPassword((enabled) => {
+      main.pushLine("PASSWORD! " + enabled);
+      if (enabled) {
         main.pushLine("Password input");
         prompt.left = 11;
         prePrompt.width = 10;
@@ -112,13 +100,21 @@ export default (screen: Screen, client: Socket) => {
         prompt.secret = true;
         prompt.value = "";
         screen.render();
+      } else {
+        prompt.secret = false;
+        prompt.value = "";
+        prompt.left = 2;
+        prePrompt.width = 1;
+        prePrompt.setText(">");
+        main.pushLine("> (Password)");
+        screen.render();
       }
-
+    })
+    .onData((data: Buffer) => {
       const printable = data
         .toString("ascii")
         .replace(/\r/g, "")
-        .replace(/\n\n/g, "\n")
-        .replace(escape, "");
+        .replace(/\n\n/g, "\n");
 
       debug.pushLine(printable);
 
@@ -157,7 +153,7 @@ export default (screen: Screen, client: Socket) => {
 
       main.pushLine(lines.join("\n"));
     })
-    .on("end", () => {
+    .onEnd(() => {
       main.pushLine("Disconnected!");
       main.pushLine("Type /connect or /c to reconnect");
     });
@@ -197,17 +193,8 @@ export default (screen: Screen, client: Socket) => {
 
   const p = () => {
     prompt.readInput((_, value) => {
-      if (prompt.secret) {
-        prompt.secret = false;
-        prompt.value = "";
-        prompt.left = 2;
-        prePrompt.width = 1;
-        prePrompt.setText(">");
-        main.pushLine("> (Password)");
-        client.write(value + "\n");
-        screen.render();
-      } else {
-        if (value !== undefined) {
+      if (value !== undefined) {
+        if (!prompt.secret) {
           history.push(value);
           historyPos = history.length;
           if (value.startsWith("/")) {
@@ -218,11 +205,8 @@ export default (screen: Screen, client: Socket) => {
             } else if (cmd === "help") {
               main.pushLine("Help herp derp no time to write such things");
             } else if (cmd === "connect" || cmd === "c") {
-              // Eh, just reconnect
-              // client.connect({
-              //   host: client.address() || "",
-              //   port: client.remotePort || 0,
-              // });
+              main.pushLine("Re-connecting...");
+              client.reconnect();
             } else {
               main.pushLine(`Unknown command: ${cmd}`);
             }
@@ -230,6 +214,8 @@ export default (screen: Screen, client: Socket) => {
             main.pushLine("> " + value);
             client.write(value + "\n");
           }
+        } else {
+          client.write(value + "\n");
         }
       }
       prompt.value = "";
