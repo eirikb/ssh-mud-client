@@ -1,11 +1,11 @@
 import * as telnetlib from "telnetlib";
 
-const { GMCP, MCCP, ECHO } = telnetlib.options;
+const { MCCP, GMCP, ECHO } = telnetlib.options;
 
 const host = "aardwolf.org";
 const port = 23;
 
-const connect = () => {
+const connect = (c: () => void) => {
   const client = telnetlib.createConnection(
     {
       host,
@@ -13,9 +13,7 @@ const connect = () => {
       remoteOptions: [GMCP, MCCP, ECHO],
       localOptions: [GMCP, MCCP],
     },
-    () => {
-      (client as any).reader.flushPolicy.endOfChunk = true;
-    }
+    c
   );
   return client;
 };
@@ -23,7 +21,11 @@ const connect = () => {
 export const createClient = (): Client => {
   const listeners: [string, any][] = [];
 
-  let client = connect();
+  const conlist: any[] = [];
+  let client = connect(() => {
+    conlist.forEach((l) => l());
+  });
+  (client as any).reader.flushPolicy.endOfChunk = true;
 
   const hack = (self: Client, event: string, listener: any) => {
     listeners.push([event, listener]);
@@ -31,12 +33,27 @@ export const createClient = (): Client => {
     return self;
   };
 
+  hack({} as Client, "negotiated", () => {
+    const gmcp = client.getOption(GMCP);
+    gmcp.send("Core", "Hello", {
+      client: "ssh-mud-client",
+      version: process.env["npm_package_version"] || "",
+    });
+    gmcp.send("Core", "Supports.Set", [
+      "Char 1",
+      "Comm 1",
+      "Room 1",
+      "Group 1",
+    ]);
+  });
+
   return {
     onData(listener: (data: Buffer) => void): Client {
       return hack(this, "data", listener);
     },
     onConnect(listener: () => void): Client {
-      return hack(this, "connect", listener);
+      conlist.push(listener);
+      return this;
     },
     onEnd(listener: () => void): Client {
       hack(this, "end", () => client.emit("disable", 1));
@@ -56,10 +73,30 @@ export const createClient = (): Client => {
       return this;
     },
     reconnect() {
-      client = connect();
+      client = connect(() => {
+        conlist.forEach((l) => l());
+      });
+      (client as any).reader.flushPolicy.endOfChunk = true;
       for (let [event, listener] of listeners) {
         client.on(event, listener);
       }
+    },
+    onGmcp(
+      // @ts-ignore
+      listener: (packageName: string, messageName: string, data: any) => void
+    ): Client {
+      return this.onConnect(() => {
+        const gmcp = client.getOption(GMCP);
+        gmcp.on("gmcp", listener);
+      });
+    },
+    onError(listener: (data: any) => void): Client {
+      return hack(this, "error", listener);
+    },
+    // @ts-ignore
+    sendGmcp(packageName: string, messageName: string, data: any) {
+      const gmcp = client.getOption(GMCP);
+      gmcp.send(packageName, messageName, data);
     },
   };
 };

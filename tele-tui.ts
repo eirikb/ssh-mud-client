@@ -1,9 +1,6 @@
 import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
-import { readFileSync } from "fs";
-
-const { version } = JSON.parse(readFileSync("./package.json", "utf-8"));
 
 export default (screen: Screen, client: Client) => {
   const main = blessed.log({
@@ -26,6 +23,7 @@ export default (screen: Screen, client: Client) => {
     },
   });
 
+  // @ts-ignore
   const debug = blessed.log({
     parent: screen,
     hidden: true,
@@ -81,7 +79,9 @@ export default (screen: Screen, client: Client) => {
     children: [prePrompt, prompt],
   });
 
-  main.pushLine(`Welcome to ssh-mud-client version ${version}`);
+  main.pushLine(
+    `Welcome to ssh-mud-client version ${process.env["npm_package_version"]}`
+  );
   main.pushLine("Connecting to aardwolf...");
 
   screen.render();
@@ -91,9 +91,7 @@ export default (screen: Screen, client: Client) => {
       main.pushLine("Connected!");
     })
     .onPassword((enabled) => {
-      main.pushLine("PASSWORD! " + enabled);
       if (enabled) {
-        main.pushLine("Password input");
         prompt.left = 11;
         prePrompt.width = 10;
         prePrompt.setText("(Password)");
@@ -111,14 +109,13 @@ export default (screen: Screen, client: Client) => {
       }
     })
     .onData((data: Buffer) => {
-      const printable = data
-        .toString("ascii")
-        .replace(/\r/g, "")
-        .replace(/\n\n/g, "\n");
+      // main.add(data.toString());
+      main.add(data.toString().replace(/\r/g, ""));
+      // const printable = data.toString("ascii").replace(/[\r\n]$/g, "");
 
-      debug.pushLine(printable);
+      // debug.pushLine(printable);
 
-      let lines = printable.split("\n");
+      // let lines = printable.split("\n");
 
       // let bloodyMap: number;
       // do {
@@ -151,7 +148,15 @@ export default (screen: Screen, client: Client) => {
       //   }
       // } while (bloodyMap >= 0);
 
-      main.pushLine(lines.join("\n"));
+      // main.pushLine(lines.join("\n"));
+    })
+    .onGmcp((packageName, messageName, data) => {
+      main.pushLine(
+        `GMCP! ${packageName} :: ${messageName} :: ${JSON.stringify(data)}`
+      );
+    })
+    .onError((err) => {
+      main.pushLine(`Error: ${err}`);
     })
     .onEnd(() => {
       main.pushLine("Disconnected!");
@@ -198,7 +203,8 @@ export default (screen: Screen, client: Client) => {
           history.push(value);
           historyPos = history.length;
           if (value.startsWith("/")) {
-            const cmd = value.slice(1);
+            const parts = value.split(" ");
+            const cmd = parts[0]!.slice(1);
             if (cmd === "q" || cmd === "quit") {
               //process.exit();
               screen.destroy();
@@ -207,6 +213,18 @@ export default (screen: Screen, client: Client) => {
             } else if (cmd === "connect" || cmd === "c") {
               main.pushLine("Re-connecting...");
               client.reconnect();
+            } else if (cmd === "gmcp") {
+              main.pushLine(`gmcp: ${parts.slice(1).join(" ")}`);
+              const p = parts[1];
+              if (p) {
+                const m = parts[2];
+                if (m) {
+                  const d = parts[3];
+                  if (d) {
+                    client.sendGmcp(p, m, d);
+                  }
+                }
+              }
             } else {
               main.pushLine(`Unknown command: ${cmd}`);
             }

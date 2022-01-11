@@ -11,7 +11,15 @@ interface Client {
 
   onPassword(listener: (enabled: boolean) => void): Client;
 
+  onError(listener: (data: any) => void): Client;
+
   write(data: any): Client;
 
   reconnect(): void;
+
+  onGmcp(
+    listener: (packageName: string, messageName: String, data: any) => void
+  ): Client;
+
+  sendGmcp(packageName: string, messageName: string, data: any);
 }
