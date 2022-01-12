@@ -51,7 +51,7 @@ export class AardwolfTagParser2000 extends Transform {
             .slice(this.begin2, i + pad)
             .toString(),
         });
-        this.tag = 0;
+        this.tag = 1;
       }
     }
 
