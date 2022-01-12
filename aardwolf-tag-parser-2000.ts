@@ -14,6 +14,8 @@ export class AardwolfTagParser2000 extends Transform {
 
   private buffer: number[] = [];
 
+  // private tagName: string = "";
+
   override _transform(
     data: Uint8Array,
     _: BufferEncoding,
@@ -43,14 +45,13 @@ export class AardwolfTagParser2000 extends Transform {
       }
 
       if (this.tag === 4) {
-        this.emit("tag", {
-          tag: Buffer.from(this.buffer)
-            .slice(this.begin1, this.begin2)
-            .toString(),
-          value: Buffer.from(this.buffer)
-            .slice(this.begin2, i + pad)
-            .toString(),
-        });
+        const t = Buffer.from(this.buffer)
+          .slice(this.begin1 + 1, this.begin2)
+          .toString();
+        const d = Buffer.from(this.buffer)
+          .slice(this.begin2 + 1, i + pad)
+          .toString();
+        this.emit("tag", { tag: t, data: d });
         this.tag = 1;
       }
     }
