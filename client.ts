@@ -1,4 +1,5 @@
 import * as telnetlib from "telnetlib";
+import { AardwolfTagParser2000 } from "./aardwolf-tag-parser-2000";
 
 const { MCCP, GMCP, ECHO } = telnetlib.options;
 
@@ -6,7 +7,7 @@ const host = "aardwolf.org";
 const port = 23;
 
 const connect = (c: () => void) => {
-  const client = telnetlib.createConnection(
+  return telnetlib.createConnection(
     {
       host,
       port,
@@ -14,8 +15,7 @@ const connect = (c: () => void) => {
       localOptions: [GMCP, MCCP],
     },
     c
-  );
-  return client;
+  ); //.pipe(new AardwolfTagParser2000());
 };
 
 export const createClient = (): Client => {
@@ -40,14 +40,17 @@ export const createClient = (): Client => {
       version: process.env["npm_package_version"] || "",
     });
     gmcp.send("Core", "Supports.Set", [
-      "Char 1",
-      "Comm 1",
-      "Room 1",
-      "Group 1",
+      // "Char 1",
+      // "Comm 1",
+      // "Room 1",
+      // "Group 1",
     ]);
   });
 
   return {
+    pipe<T extends NodeJS.WritableStream>(destination: T): T {
+      return client.pipe(destination);
+    },
     onData(listener: (data: Buffer) => void): Client {
       return hack(this, "data", listener);
     },
@@ -82,7 +85,6 @@ export const createClient = (): Client => {
       }
     },
     onGmcp(
-      // @ts-ignore
       listener: (packageName: string, messageName: string, data: any) => void
     ): Client {
       return this.onConnect(() => {
@@ -93,10 +95,29 @@ export const createClient = (): Client => {
     onError(listener: (data: any) => void): Client {
       return hack(this, "error", listener);
     },
-    // @ts-ignore
     sendGmcp(packageName: string, messageName: string, data: any) {
       const gmcp = client.getOption(GMCP);
       gmcp.send(packageName, messageName, data);
     },
+  };
+};
+
+export const createAardwolfClient = (): AardwolfClient => {
+  const client = createClient();
+
+  const eh = client.pipe(new AardwolfTagParser2000());
+
+  return {
+    onParsedData(listener: (data: Buffer) => void): AardwolfClient {
+      eh.on("data", listener);
+      return this;
+    },
+    onTag(
+      listener: (data: { tag: string; data: string }) => void
+    ): AardwolfClient {
+      eh.on("tag", listener);
+      return this;
+    },
+    ...client,
   };
 };

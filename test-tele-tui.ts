@@ -1,6 +1,6 @@
 import * as blessed from "neo-blessed";
 import teleTui from "./tele-tui";
-import { createClient } from "./client";
+import { createAardwolfClient } from "./client";
 import * as fs from "fs";
 
 const screen = blessed.screen({
@@ -9,7 +9,7 @@ const screen = blessed.screen({
   fullUnicode: true,
 });
 
-const client = createClient();
+const client = createAardwolfClient();
 
 client.onError((e) => fs.appendFileSync("./log.out", `\n ${e} ${e.stack}`));
 client.onEnd(() => fs.appendFileSync("./log.out", "\nend"));

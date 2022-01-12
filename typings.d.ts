@@ -22,4 +22,14 @@ interface Client {
   ): Client;
 
   sendGmcp(packageName: string, messageName: string, data: any);
+
+  pipe<T extends NodeJS.WritableStream>(destination: T): T;
+}
+
+interface AardwolfClient extends Client {
+  onParsedData(listener: (data: Buffer) => void): AardwolfClient;
+
+  onTag(
+    listener: (data: { tag: string; data: string }) => void
+  ): AardwolfClient;
 }

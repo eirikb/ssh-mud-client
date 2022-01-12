@@ -2,7 +2,7 @@ import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
 
-export default (screen: Screen, client: Client) => {
+export default (screen: Screen, client: AardwolfClient) => {
   const main = blessed.log({
     parent: screen,
     width: "75%",
@@ -87,6 +87,15 @@ export default (screen: Screen, client: Client) => {
   screen.render();
 
   client
+    .onParsedData((data) => {
+      main.setContent(main.getContent() + data.toString());
+      // main.setCondata.toString());
+      // main.add(data.toString());
+      // main.setText(main.getText() + data.toString());
+    })
+    // .onTag(({ tag, data }) => {
+    //   main.pushLine(`TAG! ${tag} :: ${data}`);
+    // })
     .onConnect(() => {
       main.pushLine("Connected!");
     })
@@ -107,48 +116,6 @@ export default (screen: Screen, client: Client) => {
         main.pushLine("> (Password)");
         screen.render();
       }
-    })
-    .onData((data: Buffer) => {
-      // main.add(data.toString());
-      main.add(data.toString().replace(/\r/g, ""));
-      // const printable = data.toString("ascii").replace(/[\r\n]$/g, "");
-
-      // debug.pushLine(printable);
-
-      // let lines = printable.split("\n");
-
-      // let bloodyMap: number;
-      // do {
-      //   bloodyMap = lines.findIndex((line) => line.match(/\x1b\[1;35m#\x1b/));
-      //   if (bloodyMap >= 0) {
-      //     const eh = lines[bloodyMap]?.slice(0, 3);
-      //     if (eh) {
-      //       const start =
-      //         bloodyMap -
-      //         lines
-      //           .slice(0, bloodyMap)
-      //           .reverse()
-      //           .findIndex(
-      //             (line) => line.trim() === "" || !line.startsWith(eh)
-      //           );
-      //       const end =
-      //         bloodyMap +
-      //         lines.slice(bloodyMap).findIndex((line) => !line.startsWith(eh)) +
-      //         1;
-      //
-      //       if (start >= 0 && end > start) {
-      //         map.setContent(lines.slice(start, end).join("\n"));
-      //         lines = lines.slice(0, start).concat(lines.slice(end));
-      //       } else {
-      //         bloodyMap = -1;
-      //       }
-      //     } else {
-      //       bloodyMap = -1;
-      //     }
-      //   }
-      // } while (bloodyMap >= 0);
-
-      // main.pushLine(lines.join("\n"));
     })
     .onGmcp((packageName, messageName, data) => {
       main.pushLine(

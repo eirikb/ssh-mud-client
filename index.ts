@@ -81,20 +81,20 @@ new Server(
             screen.destroy();
           });
 
-          const c = telnetlib.createConnection(
-            {
-              host: "aardwolf.org",
-              port: 23,
-              remoteOptions: [GMCP, MCCP],
-              localOptions: [GMCP, MCCP],
-            },
-            () => {
-              // Hack
-              (c as any).reader.flushPolicy.endOfChunk = true;
-            }
-          );
-
-          teleTui(screen, c);
+          // const c = telnetlib.createConnection(
+          //   {
+          //     host: "aardwolf.org",
+          //     port: 23,
+          //     remoteOptions: [GMCP, MCCP],
+          //     localOptions: [GMCP, MCCP],
+          //   },
+          //   () => {
+          //     // Hack
+          //     (c as any).reader.flushPolicy.endOfChunk = true;
+          //   }
+          // );
+          //
+          // teleTui(screen, c);
         });
       });
   }
