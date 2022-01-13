@@ -43,12 +43,31 @@ export class AardwolfTagParser2000 extends Transform {
 
   private buffer: number[] = [];
 
+  private tagStart:
+    | {
+        begin: number;
+        end: number;
+        data: number[];
+        tag: number[];
+      }
+    | undefined;
+
+  emitData(data: number[]) {
+    this.emit("data", Buffer.from(data).toString());
+  }
+
+  emitTag(tag: number[], data: number[]) {
+    this.emit("tag", {
+      tag: Buffer.from(tag).toString(),
+      data: Buffer.from(data).toString(),
+    });
+  }
+
   override _transform(
     data: Uint8Array,
     _: BufferEncoding,
     callback: TransformCallback
   ) {
-    const pad = this.buffer.length;
     for (let byte of data) {
       if (byte !== cr) {
         this.buffer.push(byte || 0);
@@ -56,33 +75,49 @@ export class AardwolfTagParser2000 extends Transform {
         if (byte === lf && this.tag === 3) {
           this.tag = 4;
         } else if (i === 0 && (byte === a || byte === b)) {
-          this.begin1 = i + pad;
+          this.begin1 = i;
           this.tag = 2;
         } else if (byte === lf) {
           this.tag = 1;
         } else if (this.tag === 1 && (byte === a || byte === b)) {
-          this.begin1 = i + pad;
+          this.begin1 = i;
           this.tag = 2;
         } else if (this.tag === 2 && (byte === a2 || byte === b2)) {
-          this.begin2 = i + pad;
+          this.begin2 = i;
           this.tag = 3;
         } else if (this.tag === 1) {
           this.tag = 0;
         }
 
         if (this.tag === 4) {
-          const t = Buffer.from(this.buffer)
-            .slice(this.begin1 + 1, this.begin2)
-            .toString();
-          const d = Buffer.from(this.buffer)
-            .slice(this.begin2 + 1, i + pad)
-            .toString();
-          this.emit("tag", { tag: t, data: d });
+          const t = this.buffer.slice(this.begin1 + 1, this.begin2);
+          let d = this.buffer.slice(this.begin2 + 1, i);
 
-          this.buffer = this.buffer
-            .slice(0, this.begin1)
-            .concat(this.buffer.slice(i + pad + 1));
-          this.tag = 1;
+          // Ugh
+          if (d.length === 1 && d[0] === 10) {
+            d = [];
+          }
+
+          if (this.tagStart) {
+            d = this.buffer.slice(this.tagStart.end + 1, this.begin1 - 1);
+            this.emitTag(this.tagStart.tag, d);
+
+            this.buffer = this.buffer
+              .slice(0, this.tagStart.begin)
+              .concat(this.buffer.slice(i + 1));
+            this.tag = 1;
+            this.tagStart = undefined;
+          } else if (d.length > 0) {
+            this.emitTag(t, d);
+
+            this.buffer = this.buffer
+              .slice(0, this.begin1)
+              .concat(this.buffer.slice(i + 1));
+            this.tag = 1;
+          } else {
+            this.tagStart = { begin: this.begin1, tag: t, data: d, end: i };
+            this.tag = 1;
+          }
         }
       }
     }
@@ -90,8 +125,8 @@ export class AardwolfTagParser2000 extends Transform {
     // If we end with single (tag 1) \n just skip the parsing
     if (this.tag === 1) this.tag = 0;
 
-    if (this.tag === 0 && this.buffer.length > 0) {
-      this.emit("data", Buffer.from(this.buffer).toString());
+    if (this.tag === 0 && this.buffer.length > 0 && !this.tagStart) {
+      this.emitData(this.buffer);
       this.buffer = [];
     }
 

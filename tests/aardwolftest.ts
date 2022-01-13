@@ -61,3 +61,14 @@ test("<> as well of chunk or line", (t: any) => {
     },
   ]);
 });
+
+test("data over several lines", (t: any) => {
+  const res = run("with\n<hello>\nworld\n</hello>\ndata");
+  t.deepEqual(res.data, ["with\ndata"]);
+  t.deepEqual(res.tags, [
+    {
+      tag: "hello",
+      data: "world",
+    },
+  ]);
+});
