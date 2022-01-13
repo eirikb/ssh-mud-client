@@ -23,7 +23,6 @@ export default (screen: Screen, client: AardwolfClient) => {
     },
   });
 
-  // @ts-ignore
   const debug = blessed.log({
     parent: screen,
     hidden: true,
@@ -45,7 +44,6 @@ export default (screen: Screen, client: AardwolfClient) => {
     },
   });
 
-  // @ts-ignore
   const map = blessed.log({
     parent: screen,
     label: "Map",
@@ -88,13 +86,19 @@ export default (screen: Screen, client: AardwolfClient) => {
 
   client
     .onParsedData((data) => {
-      main.setContent(main.getContent() + data.toString());
+      main.setContent(main.getContent() + data);
     })
     .onTag(({ tag, data }) => {
-      main.pushLine(`TAG! ${tag} :: ${data}`);
+      if (tag === "MAPSTART") {
+        map.setContent(data);
+      } else {
+        main.setContent(main.getContent() + data);
+        debug.pushLine(`Unknown tag! ${tag} :: ${data}`);
+      }
     })
     .onConnect(() => {
       main.pushLine("Connected!");
+      main.pushLine("");
     })
     .onPassword((enabled) => {
       if (enabled) {

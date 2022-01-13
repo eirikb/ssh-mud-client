@@ -68,6 +68,17 @@ test("data over several lines", (t: any) => {
   t.deepEqual(res.tags, [
     {
       tag: "hello",
+      data: "world\n",
+    },
+  ]);
+});
+
+test("when there is a starttag, the endtag might not have \\n in front of it", (t: any) => {
+  const res = run("with\n<hello>\nworld</hello>\ndata");
+  t.deepEqual(res.data, ["with\ndata"]);
+  t.deepEqual(res.tags, [
+    {
+      tag: "hello",
       data: "world",
     },
   ]);

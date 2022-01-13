@@ -50,6 +50,7 @@ export class AardwolfTagParser2000 extends Transform {
         end: number;
         data: number[];
         tag: number[];
+        isBloodyMap: boolean;
       }
     | undefined;
 
@@ -79,6 +80,9 @@ export class AardwolfTagParser2000 extends Transform {
         } else if (i === 0 && (byte === a || byte === b)) {
           this.begin1 = i;
           this.tag = 2;
+        } else if (this.tagStart && (byte === a || byte === b)) {
+          this.begin1 = i + 1;
+          this.tag = 2;
         } else if (byte === lf) {
           this.tag = 1;
         } else if (this.tag === 1 && (byte === a || byte === b)) {
@@ -101,14 +105,22 @@ export class AardwolfTagParser2000 extends Transform {
           }
 
           if (this.tagStart) {
-            d = this.buffer.slice(this.tagStart.end + 1, this.begin1 - 1);
-            this.emitTag(this.tagStart.tag, d);
+            let doit = true;
 
-            this.buffer = this.buffer
-              .slice(0, this.tagStart.begin)
-              .concat(this.buffer.slice(i + 1));
-            this.tag = 1;
-            this.tagStart = undefined;
+            if (this.tagStart.isBloodyMap) {
+              doit = Buffer.from(t).toString().endsWith("APEND");
+            }
+
+            if (doit) {
+              d = this.buffer.slice(this.tagStart.end + 1, this.begin1 - 1);
+              this.emitTag(this.tagStart.tag, d);
+
+              this.buffer = this.buffer
+                .slice(0, this.tagStart.begin)
+                .concat(this.buffer.slice(i + 1));
+              this.tag = 1;
+              this.tagStart = undefined;
+            }
           } else if (d.length > 0 || t[0] === slash) {
             this.emitTag(t, d);
 
@@ -117,7 +129,14 @@ export class AardwolfTagParser2000 extends Transform {
               .concat(this.buffer.slice(i + 1));
             this.tag = 1;
           } else {
-            this.tagStart = { begin: this.begin1, tag: t, data: d, end: i };
+            const isBloodyMap = Buffer.from(t).toString() === "MAPSTART";
+            this.tagStart = {
+              begin: this.begin1,
+              tag: t,
+              data: d,
+              end: i,
+              isBloodyMap,
+            };
             this.tag = 1;
           }
         }
