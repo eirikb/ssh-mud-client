@@ -3,10 +3,20 @@ import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
 
 export default (screen: Screen, client: AardwolfClient) => {
+  let login = false;
+
+  blessed.text({
+    parent: screen,
+    width: "50%",
+    height: 1,
+    content: "F1 main      F2 chat      F3 debug",
+  });
+
   const main = blessed.log({
     parent: screen,
     width: "75%",
-    height: "100%-3",
+    top: 1,
+    height: "100%-4",
     border: {
       type: "line",
     },
@@ -25,9 +35,35 @@ export default (screen: Screen, client: AardwolfClient) => {
 
   const debug = blessed.log({
     parent: screen,
+    top: 1,
+    label: "Debug",
     hidden: true,
-    width: "100%",
-    height: "100%-3",
+    width: "75%",
+    height: "100%-4",
+    border: {
+      type: "line",
+    },
+    scrollable: true,
+    alwaysScroll: true,
+    scrollbar: {
+      ch: "O",
+      track: {
+        bg: "cyan",
+      },
+      style: {
+        inverse: true,
+      },
+    },
+  });
+
+  // @ts-ignore
+  const chat = blessed.log({
+    parent: screen,
+    hidden: true,
+    width: "75%",
+    top: 1,
+    label: "Chat",
+    height: "100%-4",
     border: {
       type: "line",
     },
@@ -84,6 +120,10 @@ export default (screen: Screen, client: AardwolfClient) => {
 
   screen.render();
 
+  screen.key("esc", () => {
+    prompt.focus();
+  });
+
   client
     .onParsedData((data) => {
       main.setContent(main.getContent() + data);
@@ -119,9 +159,18 @@ export default (screen: Screen, client: AardwolfClient) => {
       }
     })
     .onGmcp((packageName, messageName, data) => {
-      main.pushLine(
+      debug.pushLine(
         `GMCP! ${packageName} :: ${messageName} :: ${JSON.stringify(data)}`
       );
+      // First GMCP message prooobably means user logged in
+      if (!login) {
+        login = true;
+        main.pushLine("Welcome!");
+        client.write("tags map on\n");
+        client.write("tags mapexits on\n");
+        client.write("tags mapnames on\n");
+        client.write("tags channels on\n");
+      }
     })
     .onError((err) => {
       main.pushLine(`Error: ${err}`);
@@ -162,6 +211,24 @@ export default (screen: Screen, client: AardwolfClient) => {
   });
   prompt.key(["C-l", "C-right"], () => {
     client.write("e\n");
+  });
+  prompt.key("f1", () => {
+    chat.hidden = true;
+    debug.hidden = true;
+    main.hidden = false;
+    screen.render();
+  });
+  prompt.key("f2", () => {
+    main.hidden = true;
+    debug.hidden = true;
+    chat.hidden = false;
+    screen.render();
+  });
+  prompt.key("f3", () => {
+    debug.hidden = false;
+    main.hidden = true;
+    chat.hidden = true;
+    screen.render();
   });
 
   const p = () => {

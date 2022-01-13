@@ -82,7 +82,7 @@ export const createClient = (): Client => {
     onGmcp(
       listener: (packageName: string, messageName: string, data: any) => void
     ): Client {
-      return this.onConnect(() => {
+      return hack(this, "negotiated", () => {
         const gmcp = client.getOption(GMCP);
         gmcp.on("gmcp", listener);
       });
