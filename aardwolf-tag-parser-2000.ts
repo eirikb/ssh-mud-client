@@ -52,7 +52,7 @@ export class AardwolfTagParser2000 extends Transform {
     for (let byte of data) {
       if (byte !== cr) {
         this.buffer.push(byte || 0);
-        const i = this.buffer.length;
+        const i = this.buffer.length - 1;
         if (byte === lf && this.tag === 3) {
           this.tag = 4;
         } else if (i === 0 && (byte === a || byte === b)) {

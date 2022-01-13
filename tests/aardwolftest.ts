@@ -14,7 +14,6 @@ function run(input: string) {
 
 test("Beginning of chunk", (t: any) => {
   const res = run("{hello}world\n");
-  console.log(res.data);
   t.is(res.data.length, 0);
   t.deepEqual(res.tags, [
     {
