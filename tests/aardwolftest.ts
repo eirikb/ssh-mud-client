@@ -72,3 +72,15 @@ test("data over several lines", (t: any) => {
     },
   ]);
 });
+
+// Implement later, if needed
+test.skip("bigmap is different", (t: any) => {
+  const res = run("with\n{bigmap}has data\nworld\n{/bigmap}\ndata");
+  t.deepEqual(res.data, ["with\ndata"]);
+  t.deepEqual(res.tags, [
+    {
+      tag: "bigmap",
+      data: "has data\nworld",
+    },
+  ]);
+});

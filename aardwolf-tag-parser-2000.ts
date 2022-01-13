@@ -35,6 +35,7 @@ const a = "<".charCodeAt(0);
 const b = "{".charCodeAt(0);
 const a2 = ">".charCodeAt(0);
 const b2 = "}".charCodeAt(0);
+const slash = "/".charCodeAt(0);
 
 export class AardwolfTagParser2000 extends Transform {
   private tag = 0;
@@ -69,6 +70,7 @@ export class AardwolfTagParser2000 extends Transform {
     callback: TransformCallback
   ) {
     for (let byte of data) {
+      // Buzz off CR
       if (byte !== cr) {
         this.buffer.push(byte || 0);
         const i = this.buffer.length - 1;
@@ -94,7 +96,7 @@ export class AardwolfTagParser2000 extends Transform {
           let d = this.buffer.slice(this.begin2 + 1, i);
 
           // Ugh
-          if (d.length === 1 && d[0] === 10) {
+          if (d.length === 1 && d[0] === lf) {
             d = [];
           }
 
@@ -107,7 +109,7 @@ export class AardwolfTagParser2000 extends Transform {
               .concat(this.buffer.slice(i + 1));
             this.tag = 1;
             this.tagStart = undefined;
-          } else if (d.length > 0) {
+          } else if (d.length > 0 || t[0] === slash) {
             this.emitTag(t, d);
 
             this.buffer = this.buffer
