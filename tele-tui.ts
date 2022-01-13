@@ -197,7 +197,7 @@ export default (screen: Screen, client: AardwolfClient) => {
               main.pushLine(`Unknown command: ${cmd}`);
             }
           } else {
-            main.pushLine("> " + value);
+            main.setContent(main.getContent() + " " + value + "\n");
             client.write(value + "\n");
           }
         } else {

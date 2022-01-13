@@ -39,12 +39,7 @@ export const createClient = (): Client => {
       client: "ssh-mud-client",
       version: process.env["npm_package_version"] || "",
     });
-    gmcp.send("Core", "Supports.Set", [
-      // "Char 1",
-      // "Comm 1",
-      // "Room 1",
-      // "Group 1",
-    ]);
+    gmcp.send("Core", "Supports.Set", ["Char 1", "Room 1"]);
   });
 
   return {
@@ -105,19 +100,29 @@ export const createClient = (): Client => {
 export const createAardwolfClient = (): AardwolfClient => {
   const client = createClient();
 
-  const eh = client.pipe(new AardwolfTagParser2000());
+  let eh = client.pipe(new AardwolfTagParser2000());
+  let actions: (() => void)[] = [];
+  const action = (cb: () => void) => {
+    actions.push(cb);
+    cb();
+  };
 
   return {
     onParsedData(listener: (data: string) => void): AardwolfClient {
-      eh.on("data", listener);
+      action(() => eh.on("data", listener));
       return this;
     },
     onTag(
       listener: (data: { tag: string; data: string }) => void
     ): AardwolfClient {
-      eh.on("tag", listener);
+      action(() => eh.on("tag", listener));
       return this;
     },
     ...client,
+    reconnect() {
+      client.reconnect();
+      eh = client.pipe(new AardwolfTagParser2000());
+      actions.forEach((cb) => cb());
+    },
   };
 };
