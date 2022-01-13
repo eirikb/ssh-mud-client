@@ -2,8 +2,7 @@
   "version": "0.1",
   "name": "sshmud",
   "scripts": {
-    "start": "npx ts-node --files index.ts",
-    "test": "ava"
+    "start": "npx ts-node --files src/index.ts"
   },
   "dependencies": {
     "neo-blessed": "^0.2.0",
