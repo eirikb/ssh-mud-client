@@ -89,13 +89,10 @@ export default (screen: Screen, client: AardwolfClient) => {
   client
     .onParsedData((data) => {
       main.setContent(main.getContent() + data.toString());
-      // main.setCondata.toString());
-      // main.add(data.toString());
-      // main.setText(main.getText() + data.toString());
     })
-    // .onTag(({ tag, data }) => {
-    //   main.pushLine(`TAG! ${tag} :: ${data}`);
-    // })
+    .onTag(({ tag, data }) => {
+      main.pushLine(`TAG! ${tag} :: ${data}`);
+    })
     .onConnect(() => {
       main.pushLine("Connected!");
     })

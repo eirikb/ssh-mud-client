@@ -108,7 +108,7 @@ export const createAardwolfClient = (): AardwolfClient => {
   const eh = client.pipe(new AardwolfTagParser2000());
 
   return {
-    onParsedData(listener: (data: Buffer) => void): AardwolfClient {
+    onParsedData(listener: (data: string) => void): AardwolfClient {
       eh.on("data", listener);
       return this;
     },

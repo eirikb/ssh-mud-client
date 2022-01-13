@@ -27,7 +27,7 @@ interface Client {
 }
 
 interface AardwolfClient extends Client {
-  onParsedData(listener: (data: Buffer) => void): AardwolfClient;
+  onParsedData(listener: (data: string) => void): AardwolfClient;
 
   onTag(
     listener: (data: { tag: string; data: string }) => void
