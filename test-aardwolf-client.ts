@@ -1,5 +1,5 @@
 import * as blessed from "neo-blessed";
-import teleTui from "./tele-tui";
+import aardwolfClient from "./aardwolf-client";
 import { createAardwolfClient } from "./client";
 
 const screen = blessed.screen({
@@ -9,5 +9,4 @@ const screen = blessed.screen({
 });
 
 const client = createAardwolfClient();
-
-teleTui(screen, client);
+aardwolfClient(screen, client);

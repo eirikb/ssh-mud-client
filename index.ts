@@ -1,18 +1,22 @@
 import * as blessed from "neo-blessed";
 import * as fs from "fs";
 import { Server } from "ssh2";
-import * as telnetlib from "telnetlib";
-import teleTui from "./tele-tui";
+import aardwolfClient from "./aardwolf-client";
+import { createAardwolfClient } from "./client";
 
-const { GMCP, MCCP } = telnetlib.options;
+let lastLogins: { [key: string]: number } = {};
 
 new Server(
   {
     hostKeys: [fs.readFileSync("host.key")],
   },
   (client) => {
-    let username = "";
-    let key = "";
+    const userInfo: UserInfo = {
+      lastLogin: 0,
+      key: "",
+      sign: "",
+      username: "",
+    };
     client
       .on("authentication", (ctx) => {
         console.log(ctx.username, ctx.method);
@@ -21,14 +25,17 @@ new Server(
         else if (ctx.method === "keyboard-interactive") ctx.accept();
         else if (ctx.method === "password") return ctx.reject();
 
-        username = ctx.username;
+        userInfo.username = ctx.username;
+        userInfo.lastLogin = lastLogins[userInfo.username] || 0;
+        lastLogins[userInfo.username] = Date.now();
 
         const k = (ctx as any).key;
         if (k) {
-          key = k.data.toString("hex");
+          userInfo.key = k.data.toString("hex");
         }
+        userInfo.sign = (ctx as any).sign;
 
-        console.log("auth", username, key);
+        console.log("auth", userInfo);
         ctx.accept();
       })
       .on("session", (accept) => {
@@ -37,14 +44,14 @@ new Server(
         let cols = 0;
 
         session.on("pty", (accept, _, info) => {
-          console.log("pty", username, info);
+          console.log("pty", userInfo.username, info);
           rows = info.rows;
           cols = info.cols;
           if (accept) accept();
         });
 
         session.on("shell", (accept) => {
-          console.log("shell", username, key);
+          console.log("shell", userInfo.username);
           const stream = accept();
 
           const screen = blessed.screen({
@@ -77,24 +84,11 @@ new Server(
             stream.end();
           });
           client.on("close", () => {
-            console.log(username, "close");
+            console.log(userInfo.username, "close");
             screen.destroy();
           });
 
-          // const c = telnetlib.createConnection(
-          //   {
-          //     host: "aardwolf.org",
-          //     port: 23,
-          //     remoteOptions: [GMCP, MCCP],
-          //     localOptions: [GMCP, MCCP],
-          //   },
-          //   () => {
-          //     // Hack
-          //     (c as any).reader.flushPolicy.endOfChunk = true;
-          //   }
-          // );
-          //
-          // teleTui(screen, c);
+          aardwolfClient(screen, createAardwolfClient(), userInfo);
         });
       });
   }

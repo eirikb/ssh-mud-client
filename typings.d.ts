@@ -33,3 +33,10 @@ interface AardwolfClient extends Client {
     listener: (data: { tag: string; data: string }) => void
   ): AardwolfClient;
 }
+
+interface UserInfo {
+  username: string;
+  key: string;
+  sign: string;
+  lastLogin: number;
+}

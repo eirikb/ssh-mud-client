@@ -2,7 +2,7 @@ import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
 
-export default (screen: Screen, client: AardwolfClient) => {
+export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   let login = false;
 
   blessed.text({
@@ -56,7 +56,13 @@ export default (screen: Screen, client: AardwolfClient) => {
     },
   });
 
-  // @ts-ignore
+  debug.pushLine(`User ${userInfo.username}`);
+  if (userInfo.lastLogin > 0) {
+    debug.pushLine(`Last login ${new Date(userInfo.lastLogin)}`);
+  }
+  debug.pushLine(`Key ${userInfo.key}`);
+  debug.pushLine(`Sign ${userInfo.sign}`);
+
   const chat = blessed.log({
     parent: screen,
     hidden: true,
