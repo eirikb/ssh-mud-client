@@ -137,6 +137,9 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     .onTag(({ tag, data }) => {
       if (tag === "MAPSTART") {
         map.setContent(data);
+      } else if (tag.startsWith("chan")) {
+        chat.setContent(chat.getContent() + data);
+        main.setContent(main.getContent() + data);
       } else {
         main.setContent(main.getContent() + data);
         debug.pushLine(`Unknown tag! ${tag} :: ${data}`);

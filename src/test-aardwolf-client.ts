@@ -9,4 +9,9 @@ const screen = blessed.screen({
 });
 
 const client = createAardwolfClient();
-aardwolfClient(screen, client);
+aardwolfClient(screen, client, {
+  key: "",
+  lastLogin: 0,
+  sign: "",
+  username: "",
+});

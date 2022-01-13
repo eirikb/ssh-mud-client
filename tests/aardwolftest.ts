@@ -1,6 +1,6 @@
 import test from "ava";
 
-import { AardwolfTagParser2000 } from "../aardwolf-tag-parser-2000";
+import { AardwolfTagParser2000 } from "../src/aardwolf-tag-parser-2000";
 
 function run(input: string) {
   const data: string[] = [];
