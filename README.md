@@ -1,18 +1,24 @@
+[![Node.js CI](https://github.com/eirikb/ssh-mud-client/actions/workflows/node.js.yml/badge.svg)](https://github.com/eirikb/ssh-mud-client/actions/workflows/node.js.yml)
+
 # ssh-mud-client
 
-**PLAY A MMORPG GAME IN YOUR TERMINAL**  
-for free
-
+MUD client over SSH
 
 **_Heavly_** inspired by **[ssh-chat](https://github.com/shazow/ssh-chat)**
 
-[![Node.js CI](https://github.com/eirikb/ssh-mud-client/actions/workflows/node.js.yml/badge.svg)](https://github.com/eirikb/ssh-mud-client/actions/workflows/node.js.yml)
-
-https://user-images.githubusercontent.com/241706/149421516-f5947d57-5ca9-4e08-aa77-971fa8ec03ed.mp4
-
-
-Try it out: 
+Try it out:
 
 ```bash
-ssh eirikb.no
+ssh mud.eirikb.no
 ```
+
+![gifcast_220114221354](https://user-images.githubusercontent.com/241706/149586142-22e928d8-7d8e-4445-bf0f-8bfc7a132c9c.gif)
+
+
+Features:
+  * Scrolling with <kbd>PgUp</kbd> and <kbd>PgDn</kbd>
+  * Move around with <kbd>Ctrl</kbd> + Arrow keys
+  * Or move with <kbd>Ctrl</kbd> + vim direction (hjkl)
+  * Map view
+  * Command history
+  * Chat window
