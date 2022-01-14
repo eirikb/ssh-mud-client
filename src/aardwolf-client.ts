@@ -138,7 +138,10 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
       if (tag === "MAPSTART") {
         map.setContent(data);
       } else if (tag.startsWith("chan")) {
-        chat.setContent(chat.getContent() + data);
+        chat.pushLine(data);
+        main.setContent(main.getContent() + data);
+      } else if (tag.startsWith("tell")) {
+        chat.pushLine(data);
         main.setContent(main.getContent() + data);
       } else {
         main.setContent(main.getContent() + data);
