@@ -1,42 +1,51 @@
 import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
+import { createTabish } from "./tabish";
 
 export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   let login = false;
 
-  blessed.box({
+  const tabish = createTabish({
     parent: screen,
     width: "100%",
     height: 1,
     left: 1,
-    children: [
-      blessed.text({
-        width: 10,
-        content: "F1 main",
-        style: {
-          inverse: true,
-        },
-      }),
-      blessed.box({ width: 10, left: 10 }),
-      blessed.text({
-        width: 10,
-        left: 20,
-        content: "F2 chat",
-      }),
-      blessed.box({ width: 10, left: 30 }),
-      blessed.text({
-        width: 10,
-        left: 40,
-        content: "F3 debug",
-      }),
-      blessed.text({
-        right: 1,
-        width: `v${process.env["npm_package_version"]}`.length,
-        content: `v${process.env["npm_package_version"]}`,
-      }),
-    ],
+    tabs: ["F1 main", "F2 chat", "F3 debug"],
   });
+
+  // blessed.box({
+  //   parent: screen,
+  //   width: "100%",
+  //   height: 1,
+  //   left: 1,
+  //   children: [
+  //     blessed.text({
+  //       width: 10,
+  //       content: "F1 main",
+  //       style: {
+  //         inverse: true,
+  //       },
+  //     }),
+  //     blessed.box({ width: 10, left: 10 }),
+  //     blessed.text({
+  //       width: 10,
+  //       left: 20,
+  //       content: "F2 chat",
+  //     }),
+  //     blessed.box({ width: 10, left: 30 }),
+  //     blessed.text({
+  //       width: 10,
+  //       left: 40,
+  //       content: "F3 debug",
+  //     }),
+  //     blessed.text({
+  //       right: 1,
+  //       width: `v${process.env["npm_package_version"]}`.length,
+  //       content: `v${process.env["npm_package_version"]}`,
+  //     }),
+  //   ],
+  // });
 
   const game = blessed.box({
     parent: screen,
@@ -120,7 +129,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
 
   const map = blessed.log({
     parent: game,
-    label: "Map",
+    label: "Map (F4 toggle)",
     left: "75%",
     width: "25%",
     height: "100%",
@@ -267,21 +276,34 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     client.write("e\n");
   });
   prompt.key("f1", () => {
+    tabish.selectTab(0);
     chat.hidden = true;
     debug.hidden = true;
     game.hidden = false;
     screen.render();
   });
   prompt.key("f2", () => {
+    tabish.selectTab(1);
     game.hidden = true;
     debug.hidden = true;
     chat.hidden = false;
     screen.render();
   });
   prompt.key("f3", () => {
+    tabish.selectTab(2);
     debug.hidden = false;
     game.hidden = true;
     chat.hidden = true;
+    screen.render();
+  });
+  prompt.key("f4", () => {
+    if (map.hidden) {
+      map.show();
+      main.width = "75%";
+    } else {
+      map.hide();
+      main.width = "100%";
+    }
     screen.render();
   });
   prompt.key("C-w", () => {
