@@ -22,3 +22,9 @@ Features:
   * Map view
   * Command history
   * Chat window
+
+
+Demo:
+
+https://user-images.githubusercontent.com/241706/149595528-acc21b81-57fb-47d6-987c-ed6ee0b44bd5.mp4
+
