@@ -1,5 +1,13 @@
 # ssh-mud-client
 
+MUD client over SSH
+
+Try it out
+
+```bash
+ssh mud.eirikb.no
+```
+
 **PLAY A MMORPG GAME IN YOUR TERMINAL**  
 for free
 
