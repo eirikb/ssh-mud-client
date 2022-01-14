@@ -9,14 +9,20 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     parent: screen,
     width: "50%",
     height: 1,
-    content: "F1 main      F2 chat      F3 debug",
+    content: "F1 main      F2 chat      F3 debug      F4 Toggle map",
+  });
+
+  const game = blessed.box({
+    parent: screen,
+    width: "100%",
+    top: 1,
+    height: "100%-4",
   });
 
   const main = blessed.log({
-    parent: screen,
+    parent: game,
     width: "75%",
-    top: 1,
-    height: "100%-4",
+    height: "100%",
     border: {
       type: "line",
     },
@@ -38,7 +44,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     top: 1,
     label: "Debug",
     hidden: true,
-    width: "75%",
+    width: "100%",
     height: "100%-4",
     border: {
       type: "line",
@@ -66,7 +72,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   const chat = blessed.log({
     parent: screen,
     hidden: true,
-    width: "75%",
+    width: "100%",
     top: 1,
     label: "Chat",
     height: "100%-4",
@@ -87,11 +93,11 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   });
 
   const map = blessed.log({
-    parent: screen,
+    parent: game,
     label: "Map",
     left: "75%",
     width: "25%",
-    height: "100%-3",
+    height: "100%",
     border: {
       type: "line",
     },
@@ -135,6 +141,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
       main.setContent(main.getContent() + data);
     })
     .onTag(({ tag, data }) => {
+      debug.pushLine(`Tag! ${tag} :: ${data}`);
       if (tag === "MAPSTART") {
         map.setContent(data);
       } else if (tag.startsWith("chan")) {
@@ -145,10 +152,11 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
         main.setContent(main.getContent() + data);
       } else {
         main.setContent(main.getContent() + data);
-        debug.pushLine(`Unknown tag! ${tag} :: ${data}`);
+        debug.pushLine(`Unknown tag! ${tag}`);
       }
     })
     .onConnect(() => {
+      debug.pushLine("Connected!");
       main.pushLine("Connected!");
       main.pushLine("");
     })
@@ -174,6 +182,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
       debug.pushLine(
         `GMCP! ${packageName} :: ${messageName} :: ${JSON.stringify(data)}`
       );
+
       // First GMCP message prooobably means user logged in
       if (!login) {
         login = true;
@@ -186,8 +195,10 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     })
     .onError((err) => {
       main.pushLine(`Error: ${err}`);
+      debug.pushLine(`Error: ${err}`);
     })
     .onEnd(() => {
+      debug.pushLine("Disconnected!");
       main.pushLine("Disconnected!");
       main.pushLine("Type /connect or /c to reconnect");
     });
@@ -231,18 +242,18 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   prompt.key("f1", () => {
     chat.hidden = true;
     debug.hidden = true;
-    main.hidden = false;
+    game.hidden = false;
     screen.render();
   });
   prompt.key("f2", () => {
-    main.hidden = true;
+    game.hidden = true;
     debug.hidden = true;
     chat.hidden = false;
     screen.render();
   });
   prompt.key("f3", () => {
     debug.hidden = false;
-    main.hidden = true;
+    game.hidden = true;
     chat.hidden = true;
     screen.render();
   });
@@ -257,8 +268,8 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
             const parts = value.split(" ");
             const cmd = parts[0]!.slice(1);
             if (cmd === "q" || cmd === "quit") {
-              //process.exit();
               screen.destroy();
+              client.end();
             } else if (cmd === "help") {
               main.pushLine("Help herp derp no time to write such things");
             } else if (cmd === "connect" || cmd === "c") {

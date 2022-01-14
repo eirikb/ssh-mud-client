@@ -17,6 +17,8 @@ interface Client {
 
   reconnect(): void;
 
+  end(): void;
+
   onGmcp(
     listener: (packageName: string, messageName: String, data: any) => void
   ): Client;

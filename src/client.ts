@@ -43,6 +43,9 @@ export const createClient = (): Client => {
   });
 
   return {
+    end(): void {
+      client.end();
+    },
     pipe<T extends NodeJS.WritableStream>(destination: T): T {
       return client.pipe(destination);
     },
