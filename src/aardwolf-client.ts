@@ -99,12 +99,28 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     label: "Map (F4 toggle)",
     left: "75%",
     width: "25%",
-    height: "100%",
+    height: "50%",
     border: {
       type: "line",
     },
-    scrollable: true,
-    alwaysScroll: true,
+  });
+
+  const stats = blessed.box({
+    parent: game,
+    label: "Stats (F5 toggle)",
+    top: "50%",
+    left: "75%",
+    width: "25%",
+    height: "50%",
+    border: {
+      type: "line",
+    },
+    children: [
+      // blessed.progressbar({
+      //   orientation: "horizontal",
+      //   filled: 45,
+      // }),
+    ],
   });
 
   const prePrompt = blessed.text({
@@ -264,13 +280,13 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     screen.render();
   });
   prompt.key("f4", () => {
-    if (map.hidden) {
-      map.show();
-      main.width = "75%";
-    } else {
-      map.hide();
-      main.width = "100%";
-    }
+    map.toggle();
+    main.width = map.hidden && stats.hidden ? "100%" : "75%";
+    screen.render();
+  });
+  prompt.key("f5", () => {
+    stats.toggle();
+    main.width = map.hidden && stats.hidden ? "100%" : "75%";
     screen.render();
   });
   prompt.key("C-w", () => {
