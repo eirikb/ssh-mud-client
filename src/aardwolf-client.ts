@@ -9,6 +9,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     parent: screen,
     width: "100%",
     height: 1,
+    left: 1,
     children: [
       blessed.text({
         width: 10,
@@ -166,7 +167,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
       main.setContent(main.getContent() + data);
     })
     .onTag(({ tag, data }) => {
-      debug.pushLine(`Tag! ${tag} :: ${data}`);
+      debug.pushLine(`Tag! ${tag} `);
       if (tag === "MAPSTART") {
         map.setContent(data);
       } else if (tag.startsWith("chan")) {
@@ -216,6 +217,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
         client.write("tags mapexits on\n");
         client.write("tags mapnames on\n");
         client.write("tags channels on\n");
+        client.write("map\n");
       }
     })
     .onError((err) => {
