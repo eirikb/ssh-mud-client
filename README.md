@@ -4,7 +4,7 @@
 
 MUD client over SSH
 
-**_Heavly_** inspired by **[ssh-chat](https://github.com/shazow/ssh-chat)**
+Heavly inspired by **[ssh-chat](https://github.com/shazow/ssh-chat)**
 
 Try it out:
 
