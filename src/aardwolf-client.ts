@@ -233,13 +233,13 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   prompt.key("pageup", () => {
     [main, chat, debug]
       .filter((w) => !w.hidden)
-      .forEach((w) => w.scroll(-(Number(w.height) / 2)));
+      .forEach((w) => w.scroll(-Math.floor(Number(w.height) / 2)));
     screen.render();
   });
   prompt.key("pagedown", () => {
     [main, chat, debug]
       .filter((w) => !w.hidden)
-      .forEach((w) => w.scroll(Number(w.height) / 2));
+      .forEach((w) => w.scroll(Math.floor(Number(w.height) / 3)));
     screen.render();
   });
   prompt.key(["C-p", "up"], () => {
@@ -287,6 +287,12 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     screen.render();
   });
 
+  screen.on("warning", (w) => debug.pushLine(`Warning: ${w}`));
+
+  screen.on("resize", (size) =>
+    debug.pushLine(`Resize: ${JSON.stringify(size)}`)
+  );
+
   const p = () => {
     prompt.readInput((_, value) => {
       if (value !== undefined) {
@@ -301,6 +307,13 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
               client.end();
             } else if (cmd === "help") {
               main.pushLine("Help herp derp no time to write such things");
+            } else if (cmd === "screen") {
+              debug.pushLine(
+                JSON.stringify({
+                  height: screen.height,
+                  width: screen.width,
+                })
+              );
             } else if (cmd === "connect" || cmd === "c") {
               main.pushLine("Re-connecting...");
               client.reconnect();
