@@ -242,7 +242,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
       .forEach((w) => w.scroll(Number(w.height) / 2));
     screen.render();
   });
-  prompt.key("up", () => {
+  prompt.key(["C-p", "up"], () => {
     historyPos--;
     prompt.value = history[historyPos] || "";
     screen.render();
@@ -280,6 +280,10 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     debug.hidden = false;
     game.hidden = true;
     chat.hidden = true;
+    screen.render();
+  });
+  prompt.key("C-w", () => {
+    prompt.value = prompt.value.split(" ").slice(0, -1).join(" ");
     screen.render();
   });
 
