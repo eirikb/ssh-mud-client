@@ -192,11 +192,15 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   const history: string[] = [];
   let historyPos = 0;
   prompt.key("pageup", () => {
-    main.scroll(-10);
+    [main, chat, debug]
+      .filter((w) => !w.hidden)
+      .forEach((w) => w.scroll(-(Number(w.height) / 2)));
     screen.render();
   });
   prompt.key("pagedown", () => {
-    main.scroll(10);
+    [main, chat, debug]
+      .filter((w) => !w.hidden)
+      .forEach((w) => w.scroll(Number(w.height) / 2));
     screen.render();
   });
   prompt.key("up", () => {

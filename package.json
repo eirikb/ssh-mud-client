@@ -2,7 +2,8 @@
   "version": "0.1",
   "name": "sshmud",
   "scripts": {
-    "start": "npx ts-node --files src/index.ts"
+    "start": "npx ts-node --files src/index.ts",
+    "eh": "npx ts-node --files src/test-aardwolf-client.ts"
   },
   "dependencies": {
     "neo-blessed": "^0.2.0",
