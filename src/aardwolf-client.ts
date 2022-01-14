@@ -14,15 +14,21 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     tabs: ["F1 main", "F2 chat", "F3 debug"],
   });
 
-  const game = blessed.box({
+  const game1 = blessed.box({
     parent: screen,
     width: "100%",
     top: 1,
     height: "100%-4",
   });
 
+  const game2 = blessed.box({
+    parent: game1,
+    width: "100%",
+    height: "100%",
+  });
+
   const main = blessed.log({
-    parent: game,
+    parent: game2,
     width: "75%",
     height: "100%",
     border: {
@@ -94,8 +100,31 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     },
   });
 
+  const chat2 = blessed.log({
+    parent: game1,
+    hidden: true,
+    width: "50%",
+    left: "50%",
+    label: "Chat",
+    height: "100%",
+    border: {
+      type: "line",
+    },
+    scrollable: true,
+    alwaysScroll: true,
+    scrollbar: {
+      ch: "O",
+      track: {
+        bg: "cyan",
+      },
+      style: {
+        inverse: true,
+      },
+    },
+  });
+
   const map = blessed.log({
-    parent: game,
+    parent: game2,
     label: "Map (F4 toggle)",
     left: "75%",
     width: "25%",
@@ -106,7 +135,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   });
 
   const stats = blessed.box({
-    parent: game,
+    parent: game2,
     label: "Stats (F5 toggle)",
     top: "50%",
     left: "75%",
@@ -164,9 +193,11 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
         map.setContent(data);
       } else if (tag.startsWith("chan")) {
         chat.pushLine(data);
+        chat2.pushLine(data);
         main.setContent(main.getContent() + data);
       } else if (tag.startsWith("tell")) {
         chat.pushLine(data);
+        chat2.pushLine(data);
         main.setContent(main.getContent() + data);
       } else {
         main.setContent(main.getContent() + data);
@@ -262,12 +293,12 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     tabish.selectTab(0);
     chat.hidden = true;
     debug.hidden = true;
-    game.hidden = false;
+    game1.hidden = false;
     screen.render();
   });
   prompt.key("f2", () => {
     tabish.selectTab(1);
-    game.hidden = true;
+    game1.hidden = true;
     debug.hidden = true;
     chat.hidden = false;
     screen.render();
@@ -275,7 +306,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   prompt.key("f3", () => {
     tabish.selectTab(2);
     debug.hidden = false;
-    game.hidden = true;
+    game1.hidden = true;
     chat.hidden = true;
     screen.render();
   });
@@ -296,9 +327,26 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
 
   screen.on("warning", (w) => debug.pushLine(`Warning: ${w}`));
 
-  screen.on("resize", (size) =>
-    debug.pushLine(`Resize: ${JSON.stringify(size)}`)
-  );
+  function perhapsShowChat2() {
+    if (screen.width > 230) {
+      game2.width = "50%";
+      chat2.show();
+    } else {
+      game2.width = "100%";
+      chat2.hide();
+    }
+  }
+
+  screen.on("resize", () => {
+    debug.pushLine(
+      `Resize: ${JSON.stringify({
+        width: screen.width,
+        height: screen.height,
+      })}`
+    );
+    perhapsShowChat2();
+  });
+  perhapsShowChat2();
 
   const p = () => {
     prompt.readInput((_, value) => {
