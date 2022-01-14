@@ -14,39 +14,6 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     tabs: ["F1 main", "F2 chat", "F3 debug"],
   });
 
-  // blessed.box({
-  //   parent: screen,
-  //   width: "100%",
-  //   height: 1,
-  //   left: 1,
-  //   children: [
-  //     blessed.text({
-  //       width: 10,
-  //       content: "F1 main",
-  //       style: {
-  //         inverse: true,
-  //       },
-  //     }),
-  //     blessed.box({ width: 10, left: 10 }),
-  //     blessed.text({
-  //       width: 10,
-  //       left: 20,
-  //       content: "F2 chat",
-  //     }),
-  //     blessed.box({ width: 10, left: 30 }),
-  //     blessed.text({
-  //       width: 10,
-  //       left: 40,
-  //       content: "F3 debug",
-  //     }),
-  //     blessed.text({
-  //       right: 1,
-  //       width: `v${process.env["npm_package_version"]}`.length,
-  //       content: `v${process.env["npm_package_version"]}`,
-  //     }),
-  //   ],
-  // });
-
   const game = blessed.box({
     parent: screen,
     width: "100%",
