@@ -2,6 +2,9 @@ import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
 import { createTabish } from "./tabish";
+import { commands } from "./aardwolf-commands";
+
+const commandsLowerCase = commands.map((c) => c.toLowerCase());
 
 export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   let login = false;
@@ -322,6 +325,21 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   });
   prompt.key("C-w", () => {
     prompt.value = prompt.value.split(" ").slice(0, -1).join(" ");
+    screen.render();
+  });
+  prompt.key("tab", () => {
+    const q = prompt.value.replace(/\t/g, "");
+    const parts = q.split(" ").filter((w) => w);
+    if (parts.length === 1) {
+      const cmd = commandsLowerCase.find((c) => c.startsWith(parts[0] || ""));
+      if (cmd) {
+        prompt.value = cmd + " ";
+      } else {
+        prompt.value = q;
+      }
+    } else {
+      prompt.value = q;
+    }
     screen.render();
   });
 
