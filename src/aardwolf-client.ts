@@ -329,17 +329,31 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   });
   prompt.key("tab", () => {
     const q = prompt.value.replace(/\t/g, "");
-    const parts = q.split(" ").filter((w) => w);
-    if (parts.length === 1) {
-      const cmd = commandsLowerCase.find((c) => c.startsWith(parts[0] || ""));
+    const lastSpace = q.lastIndexOf(" ");
+    const oneWord = lastSpace < 0;
+
+    if (oneWord) {
+      const cmd = commandsLowerCase.find((w) => w.startsWith(q));
       if (cmd) {
         prompt.value = cmd + " ";
-      } else {
-        prompt.value = q;
+        screen.render();
+        return;
       }
     } else {
-      prompt.value = q;
+      const word = q.substring(lastSpace + 1);
+      const cmd = main
+        .getText()
+        .slice(-1000)
+        .split(" ")
+        .find((w) => w.toLowerCase().startsWith(word));
+      if (cmd) {
+        prompt.value = q.slice(0, lastSpace) + " " + cmd + " ";
+        screen.render();
+        return;
+      }
     }
+
+    prompt.value = q;
     screen.render();
   });
 
