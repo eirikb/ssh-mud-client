@@ -3,6 +3,7 @@ import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
 import { createTabish } from "./tabish";
 import { commands } from "./aardwolf-commands";
+import { createBarus } from "./barus";
 
 const commandsLowerCase = commands.map((c) => c.toLowerCase());
 
@@ -21,7 +22,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     parent: screen,
     width: "100%",
     top: 1,
-    height: "100%-4",
+    height: "100%-5",
   });
 
   const game2 = blessed.box({
@@ -56,7 +57,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     label: "Debug",
     hidden: true,
     width: "100%",
-    height: "100%-4",
+    height: "100%-5",
     border: {
       type: "line",
     },
@@ -86,7 +87,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     width: "100%",
     top: 1,
     label: "Chat",
-    height: "100%-4",
+    height: "100%-5",
     border: {
       type: "line",
     },
@@ -166,13 +167,64 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     left: 2,
   });
 
+  // const hp = blessed.progressbar({
+  //   width: 100,
+  //   height: 1,
+  //   top: 1,
+  //   value: 69,
+  //   orientation: "horizontal",
+  // });
+  // const hp = blessed.progressbar({
+  //   style: {
+  //     bar: {
+  //       bg: "default",
+  //       fg: "blue",
+  //     },
+  //   },
+  //   ch: "█",
+  //   width: 45,
+  //   height: 1,
+  //   left: 0,
+  //   top: 1,
+  //   filled: 50,
+  // });
+
+  const barWidth = 30;
+  const hp = createBarus({
+    top: 1,
+    left: 0,
+    name: "HP",
+    current: 0,
+    max: 0,
+    width: barWidth,
+    color: "red",
+  });
+  const mana = createBarus({
+    top: 1,
+    left: barWidth,
+    name: "Mana",
+    current: 0,
+    max: 0,
+    width: barWidth,
+    color: "blue",
+  });
+  const moves = createBarus({
+    top: 1,
+    left: barWidth * 2,
+    name: "Moves",
+    current: 0,
+    max: 0,
+    width: barWidth,
+    color: "yellow",
+  });
+
   blessed.box({
     parent: screen,
     bottom: 0,
-    height: 3,
+    height: 4,
     width: "100%",
     border: "line",
-    children: [prePrompt, prompt],
+    children: [prePrompt, prompt, hp, mana, moves],
   });
 
   main.pushLine(
@@ -234,6 +286,18 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
       debug.pushLine(
         `GMCP! ${packageName} :: ${messageName} :: ${JSON.stringify(data)}`
       );
+
+      if (packageName === "char" && messageName === "maxstats") {
+        hp.setMax(data.maxhp);
+        mana.setMax(data.maxmana);
+        moves.setMax(data.maxmoves);
+      }
+
+      if (packageName === "char" && messageName === "vitals") {
+        hp.setCurrent(data.hp);
+        mana.setCurrent(data.mana);
+        moves.setCurrent(data.moves);
+      }
 
       // First GMCP message prooobably means user logged in
       if (!login) {
