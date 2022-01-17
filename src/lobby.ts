@@ -3,8 +3,9 @@ import { Widgets } from "blessed";
 import Screen = Widgets.Screen;
 
 import { sansa } from "../sansa";
-import { createAardwolfClient } from "./client";
+import { createAardwolfClient, createClient } from "./client";
 import aardwolfClient from "../src/aardwolf-client";
+import generalClient from "./general-client";
 
 let i = 0;
 const sansaLines = sansa
@@ -70,6 +71,8 @@ export default (screen: Screen, userInfo: UserInfo) => {
         const client = createAardwolfClient();
         aardwolfClient(screen, client, userInfo);
       } else if (cmd === "realms") {
+        const client = createClient("procrealms.ddns.net", 3000);
+        generalClient(screen, client, userInfo);
       } else if (cmd === "about") {
         blessed
           .message({
