@@ -4,6 +4,7 @@ import Screen = Widgets.Screen;
 import { createTabish } from "./tabish";
 import { commands } from "./aardwolf-commands";
 import { createBarus } from "./barus";
+import { createStats } from "./stats";
 
 const commandsLowerCase = commands.map((c) => c.toLowerCase());
 
@@ -132,28 +133,22 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
     label: "Map (F4 toggle)",
     left: "75%",
     width: "25%",
-    height: "50%",
+    height: 25,
     border: {
       type: "line",
     },
   });
 
-  const stats = blessed.box({
+  const stats = createStats({
     parent: game2,
     label: "Stats (F5 toggle)",
-    top: "50%",
+    top: 25,
     left: "75%",
     width: "25%",
-    height: "50%",
+    bottom: 0,
     border: {
       type: "line",
     },
-    children: [
-      // blessed.progressbar({
-      //   orientation: "horizontal",
-      //   filled: 45,
-      // }),
-    ],
   });
 
   const prePrompt = blessed.text({
@@ -291,6 +286,21 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
         hp.setMax(data.maxhp);
         mana.setMax(data.maxmana);
         moves.setMax(data.maxmoves);
+        for (const [name, max] of Object.entries(data)) {
+          stats.setMaxStat(name.replace("max", ""), Number(max));
+        }
+      }
+
+      if (packageName === "char" && messageName === "stats") {
+        for (const [name, max] of Object.entries(data)) {
+          stats.setStat(name, Number(max));
+        }
+      }
+
+      if (packageName === "char" && messageName === "worth") {
+        for (const [name, max] of Object.entries(data)) {
+          stats.setStat(name, Number(max));
+        }
       }
 
       if (packageName === "char" && messageName === "vitals") {
@@ -380,6 +390,7 @@ export default (screen: Screen, client: AardwolfClient, userInfo: UserInfo) => {
   prompt.key("f4", () => {
     map.toggle();
     main.width = map.hidden && stats.hidden ? "100%" : "75%";
+    stats.top = map.hidden ? 0 : map.height;
     screen.render();
   });
   prompt.key("f5", () => {

@@ -33,15 +33,20 @@ export const createBarus = (options: BarusOptions): BoxElement & Barus => {
         fg: options.color,
       },
     },
-    ch: "█",
+    ch: "|",
     height: 1,
     top: 0,
   });
 
   function update() {
-    label.setContent(`${options.name} (${options.current}/${options.max}) `);
+    if (options.max > 0) {
+      label.setContent(`${options.name} (${options.current}/${options.max}) `);
+      (pb as any).filled = (options.current / options.max) * 100;
+    } else {
+      label.setContent("");
+      (pb as any).filled = 0;
+    }
     label.width = label.content.length;
-    (pb as any).filled = options.current;
     pb.width = Number(options.width) - label.content.length - 2;
     pb.left = label.content.length;
   }
