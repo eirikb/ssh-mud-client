@@ -1,6 +1,5 @@
 import * as blessed from "neo-blessed";
-import aardwolfClient from "./aardwolf-client";
-import { createAardwolfClient } from "./client";
+import lobby from "../src/lobby";
 
 const screen = blessed.screen({
   smartCSR: true,
@@ -8,8 +7,7 @@ const screen = blessed.screen({
   fullUnicode: true,
 });
 
-const client = createAardwolfClient();
-aardwolfClient(screen, client, {
+lobby(screen, {
   key: "",
   lastLogin: 0,
   sign: "",
