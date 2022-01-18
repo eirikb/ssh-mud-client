@@ -3,10 +3,7 @@ import { AardwolfTagParser2000 } from "./aardwolf-tag-parser-2000";
 
 const { MCCP, GMCP, ECHO } = telnetlib.options;
 
-const host = "aardwolf.org";
-const port = 23;
-
-const connect = (c: () => void) => {
+const connect = (host: string, port: number, c: () => void) => {
   return telnetlib.createConnection(
     {
       host,
@@ -15,14 +12,14 @@ const connect = (c: () => void) => {
       localOptions: [GMCP, MCCP],
     },
     c
-  ); //.pipe(new AardwolfTagParser2000());
+  );
 };
 
-export const createClient = (): Client => {
+export const createClient = (host: string, port: number): Client => {
   const listeners: [string, any][] = [];
 
   const conlist: any[] = [];
-  let client = connect(() => {
+  let client = connect(host, port, () => {
     conlist.forEach((l) => l());
   });
   (client as any).reader.flushPolicy.endOfChunk = true;
@@ -74,7 +71,7 @@ export const createClient = (): Client => {
       return this;
     },
     reconnect() {
-      client = connect(() => {
+      client = connect(host, port, () => {
         conlist.forEach((l) => l());
       });
       (client as any).reader.flushPolicy.endOfChunk = true;
@@ -101,7 +98,7 @@ export const createClient = (): Client => {
 };
 
 export const createAardwolfClient = (): AardwolfClient => {
-  const client = createClient();
+  const client = createClient("aardwolf.org", 23);
 
   let eh = client.pipe(new AardwolfTagParser2000());
   let actions: (() => void)[] = [];

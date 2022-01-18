@@ -1,8 +1,7 @@
 import * as blessed from "neo-blessed";
 import * as fs from "fs";
 import { Server } from "ssh2";
-import aardwolfClient from "./aardwolf-client";
-import { createAardwolfClient } from "./client";
+import lobby from "./lobby";
 
 let lastLogins: { [key: string]: number } = {};
 
@@ -88,7 +87,7 @@ new Server(
             screen.destroy();
           });
 
-          aardwolfClient(screen, createAardwolfClient(), userInfo);
+          lobby(screen, userInfo);
         });
       });
   }
