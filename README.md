@@ -12,6 +12,9 @@ Try it out:
 ssh mud.eirikb.no
 ```
 
+![2022-01-18_23-28](https://user-images.githubusercontent.com/241706/150029027-74450472-5bbc-43b1-9eab-dda0fd1da833.png)
+
+
 ![gifcast_220114221354](https://user-images.githubusercontent.com/241706/149586142-22e928d8-7d8e-4445-bf0f-8bfc7a132c9c.gif)
 
 
