@@ -42,3 +42,8 @@ interface UserInfo {
   sign: string;
   lastLogin: number;
 }
+
+interface WsClient extends Client {
+  forcePassword(enable: boolean): void;
+  send(data: any): void;
+}

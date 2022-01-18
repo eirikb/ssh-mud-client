@@ -3,18 +3,20 @@
   "name": "sshmud",
   "scripts": {
     "start": "npx ts-node --files src/index.ts",
-    "eh": "npx ts-node --files src/test-aardwolf-client.ts"
+    "eh": "npx ts-node --files src/ws-client.ts"
   },
   "dependencies": {
     "neo-blessed": "^0.2.0",
     "ssh2": "^1.5.0",
-    "telnetlib": "^1.0.1"
+    "telnetlib": "^1.0.1",
+    "ws": "^8.4.2"
   },
   "devDependencies": {
     "@types/blessed": "^0.1.19",
     "@types/node": "^17.0.8",
     "@types/ssh2": "^0.5.50",
     "@types/telnetlib": "^1.0.0",
+    "@types/ws": "^8.2.2",
     "ava": "^4.0.1",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.4"

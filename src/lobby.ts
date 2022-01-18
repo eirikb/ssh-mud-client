@@ -3,9 +3,10 @@ import { Widgets } from "blessed";
 import Screen = Widgets.Screen;
 
 import { sansa } from "../sansa";
-import { createAardwolfClient, createClient } from "./client";
-import aardwolfClient from "../src/aardwolf-client";
-import generalClient from "./general-client";
+import { createAardwolfClient } from "./client";
+import { aardwolfTui } from "./aardwolf-tui";
+import { procoRealmsClient } from "./procorealms-tui";
+import { createWsClient } from "./ws-client";
 
 let i = 0;
 const sansaLines = sansa
@@ -69,10 +70,10 @@ export default (screen: Screen, userInfo: UserInfo) => {
       const cmd = value.replace(/.* /, "").toLowerCase();
       if (cmd === "aardwolf") {
         const client = createAardwolfClient();
-        aardwolfClient(screen, client, userInfo);
+        aardwolfTui(screen, client, userInfo);
       } else if (cmd === "realms") {
-        const client = createClient("procrealms.ddns.net", 3000);
-        generalClient(screen, client, userInfo);
+        const client = createWsClient("procrealms.ddns.net", 8000);
+        procoRealmsClient(screen, client, userInfo);
       } else if (cmd === "about") {
         blessed
           .message({

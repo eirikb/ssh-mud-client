@@ -2,16 +2,25 @@ import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import Screen = Widgets.Screen;
 import { createTabish } from "./tabish";
+import { commands } from "./aardwolf-commands";
 import { createBarus } from "./barus";
 import { createStats } from "./stats";
 
-export default (screen: Screen, client: Client, userInfo: UserInfo) => {
+const commandsLowerCase = commands.map((c) => c.toLowerCase());
+
+export const aardwolfTui = (
+  screen: Screen,
+  client: AardwolfClient,
+  userInfo: UserInfo
+) => {
+  let login = false;
+
   const tabish = createTabish({
     parent: screen,
     width: "100%",
     height: 1,
     left: 1,
-    tabs: ["F1 main", "F2 debug"],
+    tabs: ["F1 main", "F2 chat", "F3 debug"],
   });
 
   const game1 = blessed.box({
@@ -77,10 +86,67 @@ export default (screen: Screen, client: Client, userInfo: UserInfo) => {
   debug.pushLine(`Key ${userInfo.key}`);
   debug.pushLine(`Sign ${userInfo.sign}`);
 
+  const chat = blessed.log({
+    parent: screen,
+    hidden: true,
+    width: "100%",
+    top: 1,
+    label: "Chat",
+    height: "100%-5",
+    border: {
+      type: "line",
+    },
+    scrollable: true,
+    alwaysScroll: true,
+    scrollbar: {
+      ch: "O",
+      track: {
+        bg: "cyan",
+      },
+      style: {
+        inverse: true,
+      },
+    },
+  });
+
+  const chat2 = blessed.log({
+    parent: game1,
+    hidden: true,
+    width: "50%",
+    left: "50%",
+    label: "Chat",
+    height: "100%",
+    border: {
+      type: "line",
+    },
+    scrollable: true,
+    alwaysScroll: true,
+    scrollbar: {
+      ch: "O",
+      track: {
+        bg: "cyan",
+      },
+      style: {
+        inverse: true,
+      },
+    },
+  });
+
+  const map = blessed.log({
+    parent: game2,
+    label: "Map (F4 toggle)",
+    left: "75%",
+    width: "25%",
+    height: 25,
+    border: {
+      type: "line",
+    },
+  });
+
   const stats = createStats({
     parent: game2,
     label: "Stats (F5 toggle)",
-    top: 0,
+    top: 25,
     left: "75%",
     width: "25%",
     bottom: 0,
@@ -99,6 +165,28 @@ export default (screen: Screen, client: Client, userInfo: UserInfo) => {
     height: 1,
     left: 2,
   });
+
+  // const hp = blessed.progressbar({
+  //   width: 100,
+  //   height: 1,
+  //   top: 1,
+  //   value: 69,
+  //   orientation: "horizontal",
+  // });
+  // const hp = blessed.progressbar({
+  //   style: {
+  //     bar: {
+  //       bg: "default",
+  //       fg: "blue",
+  //     },
+  //   },
+  //   ch: "█",
+  //   width: 45,
+  //   height: 1,
+  //   left: 0,
+  //   top: 1,
+  //   filled: 50,
+  // });
 
   const barWidth = 30;
   const hp = createBarus({
@@ -141,7 +229,7 @@ export default (screen: Screen, client: Client, userInfo: UserInfo) => {
   main.pushLine(
     `Welcome to ssh-mud-client version ${process.env["npm_package_version"]}`
   );
-  main.pushLine("Connecting...");
+  main.pushLine("Connecting to aardwolf...");
 
   screen.render();
 
@@ -150,8 +238,25 @@ export default (screen: Screen, client: Client, userInfo: UserInfo) => {
   });
 
   client
-    .onData((data) => {
+    .onParsedData((data) => {
       main.setContent(main.getContent() + data);
+    })
+    .onTag(({ tag, data }) => {
+      debug.pushLine(`Tag! ${tag} `);
+      if (tag === "MAPSTART") {
+        map.setContent(data);
+      } else if (tag.startsWith("chan")) {
+        chat.pushLine(data);
+        chat2.pushLine(data);
+        main.setContent(main.getContent() + data);
+      } else if (tag.startsWith("tell")) {
+        chat.pushLine(data);
+        chat2.pushLine(data);
+        main.setContent(main.getContent() + data);
+      } else {
+        main.setContent(main.getContent() + data);
+        debug.pushLine(`Unknown tag! ${tag}`);
+      }
     })
     .onConnect(() => {
       debug.pushLine("Connected!");
@@ -177,24 +282,46 @@ export default (screen: Screen, client: Client, userInfo: UserInfo) => {
       }
     })
     .onGmcp((packageName, messageName, data) => {
-      packageName = packageName.toLowerCase();
-      messageName = messageName.toLowerCase();
       debug.pushLine(
         `GMCP! ${packageName} :: ${messageName} :: ${JSON.stringify(data)}`
       );
 
-      if (packageName === "char" && messageName === "vitals") {
-        for (const [name, value] of Object.entries(data)) {
-          const v = Number(value);
-          if (name === "maxhp") hp.setMax(v);
-          else if (name === "hp") hp.setCurrent(v);
-
-          if (name.startsWith("max")) {
-            stats.setMaxStat(name.replace("max", ""), v);
-          } else {
-            stats.setStat(name, v);
-          }
+      if (packageName === "char" && messageName === "maxstats") {
+        hp.setMax(data.maxhp);
+        mana.setMax(data.maxmana);
+        moves.setMax(data.maxmoves);
+        for (const [name, max] of Object.entries(data)) {
+          stats.setMaxStat(name.replace("max", ""), Number(max));
         }
+      }
+
+      if (packageName === "char" && messageName === "stats") {
+        for (const [name, max] of Object.entries(data)) {
+          stats.setStat(name, Number(max));
+        }
+      }
+
+      if (packageName === "char" && messageName === "worth") {
+        for (const [name, max] of Object.entries(data)) {
+          stats.setStat(name, Number(max));
+        }
+      }
+
+      if (packageName === "char" && messageName === "vitals") {
+        hp.setCurrent(data.hp);
+        mana.setCurrent(data.mana);
+        moves.setCurrent(data.moves);
+      }
+
+      // First GMCP message prooobably means user logged in
+      if (!login) {
+        login = true;
+        main.pushLine("Welcome!");
+        client.write("tags map on\n");
+        client.write("tags mapexits on\n");
+        client.write("tags mapnames on\n");
+        client.write("tags channels on\n");
+        client.write("map\n");
       }
     })
     .onError((err) => {
@@ -210,13 +337,13 @@ export default (screen: Screen, client: Client, userInfo: UserInfo) => {
   const history: string[] = [];
   let historyPos = 0;
   prompt.key("pageup", () => {
-    [main, debug]
+    [main, chat, debug]
       .filter((w) => !w.hidden)
       .forEach((w) => w.scroll(-Math.floor(Number(w.height) / 2)));
     screen.render();
   });
   prompt.key("pagedown", () => {
-    [main, debug]
+    [main, chat, debug]
       .filter((w) => !w.hidden)
       .forEach((w) => w.scroll(Math.floor(Number(w.height) / 3)));
     screen.render();
@@ -245,14 +372,34 @@ export default (screen: Screen, client: Client, userInfo: UserInfo) => {
   });
   prompt.key("f1", () => {
     tabish.selectTab(0);
-    debug.hide();
-    game1.show();
+    chat.hidden = true;
+    debug.hidden = true;
+    game1.hidden = false;
     screen.render();
   });
   prompt.key("f2", () => {
+    tabish.selectTab(1);
+    game1.hidden = true;
+    debug.hidden = true;
+    chat.hidden = false;
+    screen.render();
+  });
+  prompt.key("f3", () => {
     tabish.selectTab(2);
-    debug.show();
-    game1.hide();
+    debug.hidden = false;
+    game1.hidden = true;
+    chat.hidden = true;
+    screen.render();
+  });
+  prompt.key("f4", () => {
+    map.toggle();
+    main.width = map.hidden && stats.hidden ? "100%" : "75%";
+    stats.top = map.hidden ? 0 : map.height;
+    screen.render();
+  });
+  prompt.key("f5", () => {
+    stats.toggle();
+    main.width = map.hidden && stats.hidden ? "100%" : "75%";
     screen.render();
   });
   prompt.key("C-w", () => {
@@ -265,7 +412,7 @@ export default (screen: Screen, client: Client, userInfo: UserInfo) => {
     const oneWord = lastSpace < 0;
 
     if (oneWord) {
-      const cmd = history.find((w) => w.toLowerCase().startsWith(q));
+      const cmd = commandsLowerCase.find((w) => w.startsWith(q));
       if (cmd) {
         prompt.value = cmd + " ";
         screen.render();
@@ -290,6 +437,27 @@ export default (screen: Screen, client: Client, userInfo: UserInfo) => {
   });
 
   screen.on("warning", (w) => debug.pushLine(`Warning: ${w}`));
+
+  function perhapsShowChat2() {
+    if (screen.width > 230) {
+      game2.width = "50%";
+      chat2.show();
+    } else {
+      game2.width = "100%";
+      chat2.hide();
+    }
+  }
+
+  screen.on("resize", () => {
+    debug.pushLine(
+      `Resize: ${JSON.stringify({
+        width: screen.width,
+        height: screen.height,
+      })}`
+    );
+    perhapsShowChat2();
+  });
+  perhapsShowChat2();
 
   const p = () => {
     prompt.readInput((_, value) => {
