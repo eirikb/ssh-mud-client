@@ -1,5 +1,5 @@
 import * as blessed from "neo-blessed";
-import aardwolfClient from "../src/aardwolf-tui";
+import { aardwolfTui } from "../src/aardwolf-tui";
 import { createAardwolfClient } from "../src/client";
 
 const screen = blessed.screen({
@@ -9,7 +9,7 @@ const screen = blessed.screen({
 });
 
 const client = createAardwolfClient();
-aardwolfClient(screen, client, {
+aardwolfTui(screen, client, {
   key: "",
   lastLogin: 0,
   sign: "",
