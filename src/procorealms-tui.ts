@@ -4,6 +4,8 @@ import Screen = Widgets.Screen;
 import { createTabish } from "./tabish";
 import { createBarus } from "./barus";
 import { createStats } from "./stats";
+import { createPrompt } from "./promptly";
+import { commands } from "./aardwolf-commands";
 
 export const procoRealmsClient = (
   screen: Screen,
@@ -93,15 +95,12 @@ export const procoRealmsClient = (
     },
   });
 
-  const prePrompt = blessed.text({
-    width: 1,
-    height: 1,
-    content: ">",
-  });
-  const prompt = blessed.textbox({
-    width: 50,
-    height: 1,
-    left: 2,
+  const prompt = createPrompt({
+    commands,
+    main,
+    debug,
+    screen,
+    client,
   });
 
   const barWidth = 30;
@@ -139,7 +138,7 @@ export const procoRealmsClient = (
     height: 4,
     width: "100%",
     border: "line",
-    children: [prePrompt, prompt, hp, mana, moves],
+    children: [prompt.prePrompt, prompt, hp, mana, moves],
   });
 
   main.pushLine(
@@ -176,44 +175,12 @@ export const procoRealmsClient = (
       main.pushLine("Enter username:");
     })
     .onPassword((enabled) => {
-      if (enabled) {
-        prompt.left = 11;
-        prePrompt.width = 10;
-        prePrompt.setText("(Password)");
-        prompt.secret = true;
-        prompt.value = "";
-        screen.render();
-      } else {
-        prompt.secret = false;
-        prompt.value = "";
-        prompt.left = 2;
-        prePrompt.width = 1;
-        prePrompt.setText(">");
+      prompt.password(enabled);
+      if (!enabled) {
         main.pushLine("> (Password)");
-        screen.render();
       }
     })
-    .onGmcp((packageName, messageName, data) => {
-      packageName = packageName.toLowerCase();
-      messageName = messageName.toLowerCase();
-      debug.pushLine(
-        `GMCP! ${packageName} :: ${messageName} :: ${JSON.stringify(data)}`
-      );
-
-      if (packageName === "char" && messageName === "vitals") {
-        for (const [name, value] of Object.entries(data)) {
-          const v = Number(value);
-          if (name === "maxhp") hp.setMax(v);
-          else if (name === "hp") hp.setCurrent(v);
-
-          if (name.startsWith("max")) {
-            stats.setMaxStat(name.replace("max", ""), v);
-          } else {
-            stats.setStat(name, v);
-          }
-        }
-      }
-    })
+    .onGmcp((packageName, messageName, data) => {})
     .onError((err) => {
       main.pushLine(`Error: ${err}`);
       debug.pushLine(`Error: ${err}`);
@@ -236,16 +203,6 @@ export const procoRealmsClient = (
     [main, debug]
       .filter((w) => !w.hidden)
       .forEach((w) => w.scroll(Math.floor(Number(w.height) / 3)));
-    screen.render();
-  });
-  prompt.key(["C-p", "up"], () => {
-    historyPos--;
-    prompt.value = history[historyPos] || "";
-    screen.render();
-  });
-  prompt.key("down", () => {
-    historyPos = Math.min(historyPos + 1, history.length);
-    prompt.value = history[historyPos] || "";
     screen.render();
   });
   prompt.key(["C-h", "C-left"], () => {
@@ -278,113 +235,27 @@ export const procoRealmsClient = (
     screen.render();
   });
 
-  prompt.key("C-w", () => {
-    prompt.value = prompt.value.split(" ").slice(0, -1).join(" ");
-    screen.render();
-  });
-  prompt.key("tab", () => {
-    const q = prompt.value.replace(/\t/g, "");
-    const lastSpace = q.lastIndexOf(" ");
-    const oneWord = lastSpace < 0;
-
-    if (oneWord) {
-      const cmd = history.find((w) => w.toLowerCase().startsWith(q));
-      if (cmd) {
-        prompt.value = cmd + " ";
-        screen.render();
-        return;
-      }
-    } else {
-      const word = q.substring(lastSpace + 1);
-      const cmd = main
-        .getText()
-        .slice(-1000)
-        .split(" ")
-        .find((w) => w.toLowerCase().startsWith(word));
-      if (cmd) {
-        prompt.value = q.slice(0, lastSpace) + " " + cmd + " ";
-        screen.render();
-        return;
-      }
-    }
-
-    prompt.value = q;
-    screen.render();
-  });
-
   screen.on("warning", (w) => debug.pushLine(`Warning: ${w}`));
 
-  const p = () => {
-    prompt.readInput((_, value) => {
-      if (value !== undefined) {
-        if (!prompt.secret) {
-          history.push(value);
-          historyPos = history.length;
-          if (value.startsWith("/")) {
-            const parts = value.split(" ");
-            const cmd = parts[0]!.slice(1);
-            if (cmd === "q" || cmd === "quit") {
-              screen.destroy();
-              client.end();
-            } else if (cmd === "help") {
-              main.pushLine("Help herp derp no time to write such things");
-            } else if (cmd === "screen") {
-              debug.pushLine(
-                JSON.stringify({
-                  height: screen.height,
-                  width: screen.width,
-                })
-              );
-            } else if (cmd === "connect" || cmd === "c") {
-              main.pushLine("Re-connecting...");
-              client.reconnect();
-            } else if (cmd === "gmcp") {
-              main.pushLine(`gmcp: ${parts.slice(1).join(" ")}`);
-              const p = parts[1];
-              if (p) {
-                const m = parts[2];
-                if (m) {
-                  const d = parts[3];
-                  if (d) {
-                    client.sendGmcp(p, m, d);
-                  }
-                }
-              }
-            } else {
-              main.pushLine(`Unknown command: ${cmd}`);
-            }
-          } else {
-            if (auth) {
-              if (value) {
-                name = value;
-                client.forcePassword(true);
-              }
-            } else {
-              main.setContent(main.getContent() + " " + value);
-              client.write(value);
-            }
-          }
-        } else {
-          if (auth) {
-            if (value) {
-              auth = false;
-              client.forcePassword(false);
-              client.send({
-                cmd: "login",
-                msg: {
-                  name,
-                  password: value,
-                },
-              });
-            }
-          } else {
-            client.write(value);
-          }
-        }
+  prompt.on("command", ({ password, command }) => {
+    main.pushLine(password + " :: " + command);
+
+    if (auth) {
+      if (!password) {
+        name = command;
+        client.forcePassword(true);
+      } else {
+        auth = false;
+        client.forcePassword(false);
+        client.send({
+          cmd: "login",
+          msg: {
+            name,
+            password: command,
+          },
+        });
       }
-      prompt.value = "";
-      p();
-    });
-  };
-  p();
+    }
+  });
+  prompt.prompt();
 };

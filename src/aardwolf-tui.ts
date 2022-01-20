@@ -1,12 +1,11 @@
 import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
-import Screen = Widgets.Screen;
 import { createTabish } from "./tabish";
-import { commands } from "./aardwolf-commands";
 import { createBarus } from "./barus";
 import { createStats } from "./stats";
-
-const commandsLowerCase = commands.map((c) => c.toLowerCase());
+import { createPrompt } from "./promptly";
+import { commands } from "./aardwolf-commands";
+import Screen = Widgets.Screen;
 
 export const aardwolfTui = (
   screen: Screen,
@@ -14,6 +13,16 @@ export const aardwolfTui = (
   userInfo: UserInfo
 ) => {
   let login = false;
+
+  const scrollbar = {
+    ch: "O",
+    track: {
+      bg: "cyan",
+    },
+    style: {
+      inverse: true,
+    },
+  };
 
   const tabish = createTabish({
     parent: screen,
@@ -45,15 +54,7 @@ export const aardwolfTui = (
     },
     scrollable: true,
     alwaysScroll: true,
-    scrollbar: {
-      ch: "O",
-      track: {
-        bg: "cyan",
-      },
-      style: {
-        inverse: true,
-      },
-    },
+    scrollbar,
   });
 
   const debug = blessed.log({
@@ -68,15 +69,6 @@ export const aardwolfTui = (
     },
     scrollable: true,
     alwaysScroll: true,
-    scrollbar: {
-      ch: "O",
-      track: {
-        bg: "cyan",
-      },
-      style: {
-        inverse: true,
-      },
-    },
   });
 
   debug.pushLine(`User ${userInfo.username}`);
@@ -98,15 +90,7 @@ export const aardwolfTui = (
     },
     scrollable: true,
     alwaysScroll: true,
-    scrollbar: {
-      ch: "O",
-      track: {
-        bg: "cyan",
-      },
-      style: {
-        inverse: true,
-      },
-    },
+    scrollbar,
   });
 
   const chat2 = blessed.log({
@@ -121,15 +105,7 @@ export const aardwolfTui = (
     },
     scrollable: true,
     alwaysScroll: true,
-    scrollbar: {
-      ch: "O",
-      track: {
-        bg: "cyan",
-      },
-      style: {
-        inverse: true,
-      },
-    },
+    scrollbar,
   });
 
   const map = blessed.log({
@@ -155,38 +131,16 @@ export const aardwolfTui = (
     },
   });
 
-  const prePrompt = blessed.text({
-    width: 1,
-    height: 1,
-    content: ">",
-  });
-  const prompt = blessed.textbox({
+  const prompt = createPrompt({
     width: 50,
     height: 1,
     left: 2,
+    commands,
+    screen,
+    main,
+    debug,
+    client,
   });
-
-  // const hp = blessed.progressbar({
-  //   width: 100,
-  //   height: 1,
-  //   top: 1,
-  //   value: 69,
-  //   orientation: "horizontal",
-  // });
-  // const hp = blessed.progressbar({
-  //   style: {
-  //     bar: {
-  //       bg: "default",
-  //       fg: "blue",
-  //     },
-  //   },
-  //   ch: "█",
-  //   width: 45,
-  //   height: 1,
-  //   left: 0,
-  //   top: 1,
-  //   filled: 50,
-  // });
 
   const barWidth = 30;
   const hp = createBarus({
@@ -223,15 +177,13 @@ export const aardwolfTui = (
     height: 4,
     width: "100%",
     border: "line",
-    children: [prePrompt, prompt, hp, mana, moves],
+    children: [prompt.prePrompt, prompt, hp, mana, moves],
   });
 
   main.pushLine(
     `Welcome to ssh-mud-client version ${process.env["npm_package_version"]}`
   );
   main.pushLine("Connecting to aardwolf...");
-
-  screen.render();
 
   screen.key("esc", () => {
     prompt.focus();
@@ -264,21 +216,9 @@ export const aardwolfTui = (
       main.pushLine("");
     })
     .onPassword((enabled) => {
-      if (enabled) {
-        prompt.left = 11;
-        prePrompt.width = 10;
-        prePrompt.setText("(Password)");
-        prompt.secret = true;
-        prompt.value = "";
-        screen.render();
-      } else {
-        prompt.secret = false;
-        prompt.value = "";
-        prompt.left = 2;
-        prePrompt.width = 1;
-        prePrompt.setText(">");
+      prompt.password(enabled);
+      if (!enabled) {
         main.pushLine("> (Password)");
-        screen.render();
       }
     })
     .onGmcp((packageName, messageName, data) => {
@@ -334,8 +274,6 @@ export const aardwolfTui = (
       main.pushLine("Type /connect or /c to reconnect");
     });
 
-  const history: string[] = [];
-  let historyPos = 0;
   prompt.key("pageup", () => {
     [main, chat, debug]
       .filter((w) => !w.hidden)
@@ -346,16 +284,6 @@ export const aardwolfTui = (
     [main, chat, debug]
       .filter((w) => !w.hidden)
       .forEach((w) => w.scroll(Math.floor(Number(w.height) / 3)));
-    screen.render();
-  });
-  prompt.key(["C-p", "up"], () => {
-    historyPos--;
-    prompt.value = history[historyPos] || "";
-    screen.render();
-  });
-  prompt.key("down", () => {
-    historyPos = Math.min(historyPos + 1, history.length);
-    prompt.value = history[historyPos] || "";
     screen.render();
   });
   prompt.key(["C-h", "C-left"], () => {
@@ -372,24 +300,21 @@ export const aardwolfTui = (
   });
   prompt.key("f1", () => {
     tabish.selectTab(0);
-    chat.hidden = true;
-    debug.hidden = true;
-    game1.hidden = false;
-    screen.render();
+    chat.hide();
+    debug.hide();
+    game1.show();
   });
   prompt.key("f2", () => {
     tabish.selectTab(1);
-    game1.hidden = true;
-    debug.hidden = true;
-    chat.hidden = false;
-    screen.render();
+    game1.hide();
+    debug.hide();
+    chat.show();
   });
   prompt.key("f3", () => {
     tabish.selectTab(2);
-    debug.hidden = false;
-    game1.hidden = true;
-    chat.hidden = true;
-    screen.render();
+    debug.hide();
+    game1.hide();
+    chat.show();
   });
   prompt.key("f4", () => {
     map.toggle();
@@ -400,39 +325,6 @@ export const aardwolfTui = (
   prompt.key("f5", () => {
     stats.toggle();
     main.width = map.hidden && stats.hidden ? "100%" : "75%";
-    screen.render();
-  });
-  prompt.key("C-w", () => {
-    prompt.value = prompt.value.split(" ").slice(0, -1).join(" ");
-    screen.render();
-  });
-  prompt.key("tab", () => {
-    const q = prompt.value.replace(/\t/g, "");
-    const lastSpace = q.lastIndexOf(" ");
-    const oneWord = lastSpace < 0;
-
-    if (oneWord) {
-      const cmd = commandsLowerCase.find((w) => w.startsWith(q));
-      if (cmd) {
-        prompt.value = cmd + " ";
-        screen.render();
-        return;
-      }
-    } else {
-      const word = q.substring(lastSpace + 1);
-      const cmd = main
-        .getText()
-        .slice(-1000)
-        .split(" ")
-        .find((w) => w.toLowerCase().startsWith(word));
-      if (cmd) {
-        prompt.value = q.slice(0, lastSpace) + " " + cmd + " ";
-        screen.render();
-        return;
-      }
-    }
-
-    prompt.value = q;
     screen.render();
   });
 
@@ -459,56 +351,12 @@ export const aardwolfTui = (
   });
   perhapsShowChat2();
 
-  const p = () => {
-    prompt.readInput((_, value) => {
-      if (value !== undefined) {
-        if (!prompt.secret) {
-          history.push(value);
-          historyPos = history.length;
-          if (value.startsWith("/")) {
-            const parts = value.split(" ");
-            const cmd = parts[0]!.slice(1);
-            if (cmd === "q" || cmd === "quit") {
-              screen.destroy();
-              client.end();
-            } else if (cmd === "help") {
-              main.pushLine("Help herp derp no time to write such things");
-            } else if (cmd === "screen") {
-              debug.pushLine(
-                JSON.stringify({
-                  height: screen.height,
-                  width: screen.width,
-                })
-              );
-            } else if (cmd === "connect" || cmd === "c") {
-              main.pushLine("Re-connecting...");
-              client.reconnect();
-            } else if (cmd === "gmcp") {
-              main.pushLine(`gmcp: ${parts.slice(1).join(" ")}`);
-              const p = parts[1];
-              if (p) {
-                const m = parts[2];
-                if (m) {
-                  const d = parts[3];
-                  if (d) {
-                    client.sendGmcp(p, m, d);
-                  }
-                }
-              }
-            } else {
-              main.pushLine(`Unknown command: ${cmd}`);
-            }
-          } else {
-            main.setContent(main.getContent() + " " + value + "\n");
-            client.write(value + "\n");
-          }
-        } else {
-          client.write(value + "\n");
-        }
-      }
-      prompt.value = "";
-      p();
-    });
-  };
-  p();
+  prompt.on("command", ({ password, command }) => {
+    if (!password) {
+      main.setContent(main.getContent() + command + "\n");
+    }
+    client.write(command + "\n");
+  });
+
+  prompt.prompt();
 };
