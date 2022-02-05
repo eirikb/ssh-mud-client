@@ -1,5 +1,5 @@
 import * as telnetlib from "telnetlib";
-import { AardwolfTagParser2000 } from "./aardwolf-tag-parser-2000";
+import { AardwolfTagParser1500 } from "./aardwolf-tag-parser-1500";
 
 const { MCCP, GMCP, ECHO } = telnetlib.options;
 
@@ -100,7 +100,7 @@ export const createClient = (host: string, port: number): Client => {
 export const createAardwolfClient = (): AardwolfClient => {
   const client = createClient("aardwolf.org", 23);
 
-  let eh = client.pipe(new AardwolfTagParser2000());
+  let eh = client.pipe(new AardwolfTagParser1500());
   let actions: (() => void)[] = [];
   const action = (cb: () => void) => {
     actions.push(cb);
@@ -121,7 +121,7 @@ export const createAardwolfClient = (): AardwolfClient => {
     ...client,
     reconnect() {
       client.reconnect();
-      eh = client.pipe(new AardwolfTagParser2000());
+      eh = client.pipe(new AardwolfTagParser1500());
       actions.forEach((cb) => cb());
     },
   };

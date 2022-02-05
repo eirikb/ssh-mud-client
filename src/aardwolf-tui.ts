@@ -195,7 +195,7 @@ export const aardwolfTui = (
     })
     .onTag(({ tag, data }) => {
       debug.pushLine(`Tag! ${tag} `);
-      if (tag === "MAPSTART") {
+      if (tag === "MAP") {
         map.setContent(data);
       } else if (tag.startsWith("chan")) {
         chat.pushLine(data);
@@ -314,9 +314,9 @@ export const aardwolfTui = (
   });
   prompt.key("f3", () => {
     tabish.selectTab(2);
-    debug.hide();
+    chat.hide();
     game1.hide();
-    chat.show();
+    debug.show();
     screen.render();
   });
   prompt.key("f4", () => {
