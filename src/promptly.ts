@@ -43,14 +43,17 @@ export const createPrompt = (
   prompt.key(["C-p", "up"], () => {
     historyPos--;
     prompt.value = history[historyPos] || "";
+    screen.render();
   });
   prompt.key("down", () => {
     historyPos = Math.min(historyPos + 1, history.length);
     prompt.value = history[historyPos] || "";
+    screen.render();
   });
 
   prompt.key("C-w", () => {
     prompt.value = prompt.value.split(" ").slice(0, -1).join(" ");
+    screen.render();
   });
   prompt.key("tab", () => {
     const q = prompt.value.replace(/\t/g, "");
@@ -119,12 +122,12 @@ export const createPrompt = (
             }
           } else {
             prompt.emit("command", {
-              password: !!prompt.secret,
+              password: prompt.secret,
               command: value,
             });
           }
         } else {
-          prompt.emit("command", { password: !!prompt.secret, command: value });
+          prompt.emit("command", { password: prompt.secret, command: value });
         }
       }
       prompt.value = "";

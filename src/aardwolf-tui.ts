@@ -303,18 +303,21 @@ export const aardwolfTui = (
     chat.hide();
     debug.hide();
     game1.show();
+    screen.render();
   });
   prompt.key("f2", () => {
     tabish.selectTab(1);
     game1.hide();
     debug.hide();
     chat.show();
+    screen.render();
   });
   prompt.key("f3", () => {
     tabish.selectTab(2);
     debug.hide();
     game1.hide();
     chat.show();
+    screen.render();
   });
   prompt.key("f4", () => {
     map.toggle();
